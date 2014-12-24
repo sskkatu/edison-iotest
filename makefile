@@ -1,5 +1,5 @@
-PROGRAM = i2ctest
-OBJS = i2ctest.o 
+PROGRAM = ioTest
+OBJS = main.o i2ctest.o gpiotest.o
 
 CC = gcc
 CFLAGS = -Wall -O2
@@ -14,5 +14,8 @@ $(PROGRAM) : $(OBJS)
 
 .PHONY: clean
 clean: 
-	rm $(OBJS) $(PROGRAM)
+	rm -f $(OBJS) $(PROGRAM) *~
 
+main.o : iotest.h
+i2ctest.o : iotest.h
+gpiotest.o : iotest.h
