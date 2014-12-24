@@ -1,5 +1,5 @@
 PROGRAM = ioTest
-OBJS = main.o i2ctest.o gpiotest.o
+OBJS = main.o i2ctest.o gpiotest.o spitest.o
 
 CC = gcc
 CFLAGS = -Wall -O2
@@ -16,6 +16,4 @@ $(PROGRAM) : $(OBJS)
 clean: 
 	rm -f $(OBJS) $(PROGRAM) *~
 
-main.o : iotest.h
-i2ctest.o : iotest.h
-gpiotest.o : iotest.h
+main.o i2ctest.o spiotest.o spitest.o : iotest.h
