@@ -46,7 +46,7 @@ typedef union {
      } color;
      unsigned short s;
 } bit16_color;
-
+#define KHZ(x) (x * 1000)
 #define MHZ(x) (x * 1000000)
 unsigned char *bitmap = NULL;
 
@@ -66,7 +66,7 @@ int spiTest(void)
         exit(1);
     }
     resetLcd();
-    mraa_spi_frequency(spi, MHZ(5));
+    mraa_spi_frequency(spi, MHZ(4));
     mraa_spi_mode(spi, MRAA_SPI_MODE0);
     initLcd(spi);
     printf("initLcd Done.\n");
@@ -79,7 +79,7 @@ int spiTest(void)
     bitmap = malloc(buf.st_size);
     read(fd, bitmap, buf.st_size);
 
-    while (1) {
+//    while (1) {
          bit16_color col;
          printf("1) GREEN\n");
          col.s = 0x0000;
@@ -119,8 +119,8 @@ int spiTest(void)
          dspSingleColor(spi, col.s);
          printf("9) Draw Bitmap\n");
          drawBitmap(spi, bitmap);
-    }
-    return 1;
+//    }
+    return 0;
 }
 
 static void drawBitmapfromFile(mraa_spi_context spi, const char* imageFilePath)

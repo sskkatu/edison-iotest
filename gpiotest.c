@@ -23,4 +23,5 @@ int gpioTest(void)
           sleep(SIGNAL_INVERSION_TIME);
      }
      mraa_gpio_close(gpio);
+     return 0;
 }

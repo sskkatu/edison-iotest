@@ -1,5 +1,5 @@
 PROGRAM = ioTest
-OBJS = main.o i2ctest.o gpiotest.o spitest.o
+OBJS = main.o i2ctest.o gpiotest.o spitest.o spi-ws2812Btest.o
 
 CC = gcc
 CFLAGS = -Wall -O2 -I/usr/include/ImageMagick/ 
@@ -16,4 +16,4 @@ $(PROGRAM) : $(OBJS)
 clean: 
 	rm -f $(OBJS) $(PROGRAM) *~
 
-main.o i2ctest.o spiotest.o spitest.o : iotest.h
+main.o i2ctest.o spiotest.o spitest.o spi-ws2812Btest.o : iotest.h
