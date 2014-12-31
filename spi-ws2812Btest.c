@@ -22,7 +22,7 @@ static Pixel makePixelData(uint8_t r, uint8_t g, uint8_t b);
 static void setbitPixData(Pixel *pix, int bitno, int fbit);
 
 
-uint8_t buf[10*65]; // 8x8(LED) + 1(DUMMY)
+uint8_t buf[20*65]; // 8x8(LED) + 1(DUMMY)
 int spiWS1812BTest(void) 
 {
     int i, j;
@@ -32,14 +32,14 @@ int spiWS1812BTest(void)
         fprintf(stderr, "Cannot open SPI port:%d\n", SPI_PORT);
         exit(1);
     }
-    mraa_spi_frequency(spi, KHZ(2700));
+    mraa_spi_frequency(spi, KHZ(2750));
     mraa_spi_mode(spi, MRAA_SPI_MODE0);
     mraa_spi_bit_per_word(spi, 15);
     for (i=0;;i++) {
         //        setAllPixel(i & 0xFF, i & 0xFF, i & 0xFF);
-        setAllPixel(0, 0, 0);
-        for (j=0; j < 8; j++) {
-            setPixel(j, j, 255, 255, 255);
+        setAllPixel(0xFF, 0xFF, 0xFF);
+                for (j=0; j < 8; j++) {
+                    setPixel(j, j, 0, 0, 0);
         }
         mraa_spi_transfer_buf(spi, buf, NULL, sizeof(buf));
         usleep(100000);
@@ -61,9 +61,9 @@ static void setAllPixel(uint8_t r, uint8_t g, uint8_t b)
 
 static void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) 
 {
-     int adr = y*80 + x*10;
-     Pixel pixel = makePixelData(r, g, b);
-     memcpy(buf + adr, &pixel, sizeof(pixel));
+    int adr = y*80 + x*10;
+    Pixel pixel = makePixelData(r, g, b);
+    memcpy(buf + adr, &pixel, sizeof(pixel));
 }
 
 static Pixel makePixelData(uint8_t r, uint8_t g, uint8_t b) 
@@ -74,14 +74,14 @@ static Pixel makePixelData(uint8_t r, uint8_t g, uint8_t b)
      memset(&result, 0, sizeof(result));
      for (i=0, j=0; i < 24; i++) {
           if (d24 & 0x00800000) {
-               setbitPixData(&result, j++, 1);
-               setbitPixData(&result, j++, 1);
-               setbitPixData(&result, j++, 0);
+              setbitPixData(&result, j++, 1);
+              setbitPixData(&result, j++, 1);
+              setbitPixData(&result, j++, 0);
           }
           else {
-               setbitPixData(&result, j++, 1);
-               setbitPixData(&result, j++, 0);
-               setbitPixData(&result, j++, 0);
+              setbitPixData(&result, j++, 1);
+              setbitPixData(&result, j++, 0);
+              setbitPixData(&result, j++, 0);
           }
           if (j % 16 == 15) {
                setbitPixData(&result, j++, 0);
