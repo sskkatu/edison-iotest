@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,12 +21,30 @@ static void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
 static void setAllPixel(uint8_t r, uint8_t g, uint8_t b);
 static Pixel makePixelData(uint8_t r, uint8_t g, uint8_t b);
 static void setbitPixData(Pixel *pix, int bitno, int fbit);
+#define _ 0,
+#define I 1,
+#define O 2,
+#define X 3,
+static const uint8_t Greetings[][64] = {
+    { _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ },
+    { _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ },
+    { _ I _ _ I _ _ I _ _ I I I _ I I I _ I _ I _ _ I _ _ I _ I I I _ I _ _ _ I _ _ I _ I _ I I I _ _ I _ _ I I _ _ _ I _ _ I _ _ _ _ },
+    { _ I _ _ I _ I _ I _ I _ I _ I _ I _ I _ I _ _ I _ _ I _ I _ _ _ I _ _ _ I _ _ I _ I _ I _ _ _ I _ I _ I _ I _ _ I _ _ I _ _ _ _ },
+    { _ I I I I _ I I I _ I I I _ I I I _ I _ I _ _ I I _ I _ I I I _ I _ I _ I _ _ I _ I _ I I I _ I I I _ I I _ _ _ I _ _ I _ _ _ _ },
+    { _ I _ _ I _ I _ I _ I _ _ _ I _ _ _ _ I _ _ _ I _ I I _ I _ _ _ I _ I _ I _ _ _ I _ _ I _ _ _ I _ I _ I _ I _ _ _ _ _ _ _ _ _ _ },
+    { _ I _ _ I _ I _ I _ I _ _ _ I _ _ _ _ I _ _ _ I _ _ I _ I I I _ _ I _ I _ _ _ _ I _ _ I I I _ I _ I _ I _ I _ _ I _ _ I _ _ _ _ },
+    { _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ },
+};
+#undef _
+#undef I
+#undef O
+#undef X
 
 
-uint8_t buf[20*65]; // 8x8(LED) + 1(DUMMY)
+uint8_t buf[10*64]; // 8x8(1LED=24bit*3+1) 
 int spiWS1812BTest(void) 
 {
-    int i, j;
+    int x, y, i;
     mraa_spi_context spi;
     spi = mraa_spi_init(SPI_PORT);
     if (spi == NULL) {
@@ -35,14 +54,36 @@ int spiWS1812BTest(void)
     mraa_spi_frequency(spi, KHZ(2750));
     mraa_spi_mode(spi, MRAA_SPI_MODE0);
     mraa_spi_bit_per_word(spi, 15);
+    /*
     for (i=0;;i++) {
         //        setAllPixel(i & 0xFF, i & 0xFF, i & 0xFF);
-        setAllPixel(0xFF, 0xFF, 0xFF);
-                for (j=0; j < 8; j++) {
-                    setPixel(j, j, 0, 0, 0);
+        setAllPixel(255, 255, 255);
+        for (j=0; j < 8; j++) {
+            setPixel(j + (i%8), j, 0, 0, 0);
         }
         mraa_spi_transfer_buf(spi, buf, NULL, sizeof(buf));
         usleep(100000);
+    }
+    */
+    while (1) {
+        for (i=0; ; i++) {
+            setAllPixel(0, 0, 0);
+            for (y=0; y < 8; y++) {
+                for (x=0; x < 8; x++) {
+                    uint8_t c;
+                    int xr = x + (i % 64);
+                    c = Greetings[y][xr % 64];
+                    switch (c) {
+                    case 0: setPixel(x, y, 0, 0, 0);       break;
+                    case 1: setPixel(x, y, 255, 255, 255); break;
+                    case 2: setPixel(x, y, 255, 0, 0);     break;
+                    case 3: setPixel(x, y, 0, 255, 0);     break;
+                    }
+                }
+            }
+            mraa_spi_transfer_buf(spi, buf, NULL, sizeof(buf));
+            usleep(200000);
+        }
     }
     return 0;
 }
