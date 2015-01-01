@@ -14,7 +14,7 @@
 
 //　Pixel Data
 typedef struct {
-     uint8_t pix[10];
+     uint8_t pix[12];
 } Pixel;
 
 static void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
@@ -27,13 +27,13 @@ static void setbitPixData(Pixel *pix, int bitno, int fbit);
 #define X 3,
 static const uint8_t Greetings[][64] = {
     { _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ },
-    { _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ },
-    { _ I _ _ I _ _ I _ _ I I I _ I I I _ I _ I _ _ I _ _ I _ I I I _ I _ _ _ I _ _ I _ I _ I I I _ _ I _ _ I I _ _ _ I _ _ I _ _ _ _ },
-    { _ I _ _ I _ I _ I _ I _ I _ I _ I _ I _ I _ _ I _ _ I _ I _ _ _ I _ _ _ I _ _ I _ I _ I _ _ _ I _ I _ I _ I _ _ I _ _ I _ _ _ _ },
-    { _ I I I I _ I I I _ I I I _ I I I _ I _ I _ _ I I _ I _ I I I _ I _ I _ I _ _ I _ I _ I I I _ I I I _ I I _ _ _ I _ _ I _ _ _ _ },
+    { _ I _ _ I _ _ I _ _ I I I _ I I I _ I _ I _ _ I _ _ I _ I I I _ I _ _ _ I _ _ I _ I _ I I I _ _ I _ _ I I _ _ _ X _ _ O _ X _ _ },
+    { _ I _ _ I _ I _ I _ I _ I _ I _ I _ I _ I _ _ I _ _ I _ I _ _ _ I _ _ _ I _ _ I _ I _ I _ _ _ I _ I _ I _ I _ _ O _ _ X _ X _ _ },
+    { _ I _ _ I _ I _ I _ I _ I _ I _ I _ I _ I _ _ I _ _ I _ I _ _ _ I _ _ _ I _ _ I _ I _ I _ _ _ I _ I _ I _ I _ _ X _ _ O _ X _ _ },
+    { _ I I I I _ I I I _ I I I _ I I I _ I _ I _ _ I I _ I _ I I I _ I _ I _ I _ _ I _ I _ I I I _ I I I _ I I _ _ _ O _ _ X _ X _ _ },
     { _ I _ _ I _ I _ I _ I _ _ _ I _ _ _ _ I _ _ _ I _ I I _ I _ _ _ I _ I _ I _ _ _ I _ _ I _ _ _ I _ I _ I _ I _ _ _ _ _ _ _ _ _ _ },
-    { _ I _ _ I _ I _ I _ I _ _ _ I _ _ _ _ I _ _ _ I _ _ I _ I I I _ _ I _ I _ _ _ _ I _ _ I I I _ I _ I _ I _ I _ _ I _ _ I _ _ _ _ },
-    { _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ },
+    { _ I _ _ I _ I _ I _ I _ _ _ I _ _ _ _ I _ _ _ I _ _ I _ I _ _ _ I _ I _ I _ _ _ I _ _ I _ _ _ I _ I _ I _ I _ _ X _ _ O _ X _ _ },
+    { _ I _ _ I _ I _ I _ I _ _ _ I _ _ _ _ I _ _ _ I _ _ I _ I I I _ _ I _ I _ _ _ _ I _ _ I I I _ I _ I _ I _ I _ _ O _ _ X _ X _ _ },
 };
 #undef _
 #undef I
@@ -41,7 +41,7 @@ static const uint8_t Greetings[][64] = {
 #undef X
 
 
-uint8_t buf[10*64]; // 8x8(1LED=24bit*3+1) 
+uint8_t buf[12*64]; // 8x8(1LED=24bit*3+1) 
 int spiWS1812BTest(void) 
 {
     int x, y, i;
@@ -53,7 +53,7 @@ int spiWS1812BTest(void)
     }
     mraa_spi_frequency(spi, KHZ(2750));
     mraa_spi_mode(spi, MRAA_SPI_MODE0);
-    mraa_spi_bit_per_word(spi, 15);
+    mraa_spi_bit_per_word(spi, 32);
     /*
     for (i=0;;i++) {
         //        setAllPixel(i & 0xFF, i & 0xFF, i & 0xFF);
@@ -77,12 +77,12 @@ int spiWS1812BTest(void)
                     case 0: setPixel(x, y, 0, 0, 0);       break;
                     case 1: setPixel(x, y, 255, 255, 255); break;
                     case 2: setPixel(x, y, 255, 0, 0);     break;
-                    case 3: setPixel(x, y, 0, 255, 0);     break;
+                    case 3: setPixel(x, y, 255, 255, 255);     break;
                     }
                 }
             }
             mraa_spi_transfer_buf(spi, buf, NULL, sizeof(buf));
-            usleep(200000);
+            usleep(150000);
         }
     }
     return 0;
@@ -93,6 +93,7 @@ static void setAllPixel(uint8_t r, uint8_t g, uint8_t b)
 {
      int x, y;
 
+
      for (y=0; y < 8; y++) {
           for (x=0; x < 8; x++) {
                setPixel(x, y, r, g, b);
@@ -102,7 +103,7 @@ static void setAllPixel(uint8_t r, uint8_t g, uint8_t b)
 
 static void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) 
 {
-    int adr = y*80 + x*10;
+    int adr = y*96 + x*12;
     Pixel pixel = makePixelData(r, g, b);
     memcpy(buf + adr, &pixel, sizeof(pixel));
 }
@@ -117,16 +118,18 @@ static Pixel makePixelData(uint8_t r, uint8_t g, uint8_t b)
           if (d24 & 0x00800000) {
               setbitPixData(&result, j++, 1);
               setbitPixData(&result, j++, 1);
+              setbitPixData(&result, j++, 1);
               setbitPixData(&result, j++, 0);
           }
           else {
               setbitPixData(&result, j++, 1);
               setbitPixData(&result, j++, 0);
               setbitPixData(&result, j++, 0);
+              setbitPixData(&result, j++, 0);
           }
-          if (j % 16 == 15) {
-               setbitPixData(&result, j++, 0);
-          }
+          //          if (j % 16 == 15) {
+          //               setbitPixData(&result, j++, 0);
+          //          }
           d24 = d24 << 1;
      }
       return result;
