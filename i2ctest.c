@@ -52,7 +52,6 @@ int i2cTest(void)
      i = 0;
      while (1) {
          rcvbyte = mraa_i2c_read_byte_data(i2c, i&0x0F);  // WHO_AM_I in ACCE
-	 usleep(10000);
          printf("(%012d) adr=%02x, cmd=%02x, result=%02x\n", i++, adr, i&0x0FF, rcvbyte);
      }
      mraa_i2c_stop(i2c);
