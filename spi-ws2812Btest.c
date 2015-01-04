@@ -12,23 +12,19 @@
 #define MHZ(x) ((x)*1000000)  // MHz Frequency
 
 // LED Matrix X/Y Size
-#define LEDMATRIX_XMAX 8
-#define LEDMATRIX_YMAX 8
-#define LEDMATRIX_ALL  (LEDMATRIX_XMAX * LEDMATRIX_YMAX)
-#define LEDMATRIX_PIXEL_PER_BIT 24
-#define BRIGHTNESS_LIMIT 0x100
-
-// SPI Signals number to the represent of 1-bit for ws2812Btest LED chip.
-#define SIGNALS_PER_BIT 4
+#define LEDMATRIX_X 8     // Board Martix X Size
+#define LEDMATRIX_Y 8     // Board Matrix Y Size
+//#define LEDMATRIX_XMAX 8 // Whole Matrix X Size
+#define LEDMATRIX_XMAX 16 // Whole Matrix X Size
+#define LEDMATRIX_YMAX 8  // Whole Matrix Y Size
+#define BRIGHTNESS_LIMIT 0xc0
 
 // One Pixel Data
 typedef struct {
-    uint8_t pix[SIGNALS_PER_BIT*LEDMATRIX_PIXEL_PER_BIT/8];
+    uint32_t g;
+    uint32_t r;
+    uint32_t b;
 } Pixel;
-
-// SPI signals defnition for the represent of 1-bit.
-const int SIGNAL_BIT_ZERO[SIGNALS_PER_BIT] = { 1, 0, 0, 0 };
-const int SIGNAL_BIT_ONE[SIGNALS_PER_BIT]  = { 1, 1, 1, 0 };
 
 // Greetings banner definition
 #define GREETINGS_WIDTH 64
@@ -58,13 +54,10 @@ static const uint8_t Greetings[][GREETINGS_WIDTH] = {
 // Local functions prototype
 static void    setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
 static void    setAllPixel(uint8_t r, uint8_t g, uint8_t b);
-static Pixel   makePixelData(uint8_t r, uint8_t g, uint8_t b);
-static void    setbitPixData(Pixel *pix, int bitno, int isSetBit);
-static uint8_t reverseByteBit(uint8_t in);
-static uint8_t reverseByteBit2(uint8_t in);
+static uint32_t regulateWordBit(uint8_t in);
 
 // SPI Send Data Buffer (represent of ws2812Btest signal spec)
-uint8_t buf[sizeof(Pixel)*64*2];
+Pixel buf[LEDMATRIX_XMAX*LEDMATRIX_YMAX];
 
 int spiWS1812BTest(void) 
 {
@@ -88,16 +81,15 @@ int spiWS1812BTest(void)
             for ( x = 0; x < 16; x++) {
                 int bl = BRIGHTNESS_LIMIT;
 #if (1)
-                uint8_t r = (i + (16-x)*4 + y*8)%bl;
-                uint8_t g = (i + x*8 + (8-y)*4)%bl;
-                uint8_t b = (i + (x+y)*12)%bl;
+                uint8_t r = (i + (4-x)*2 + y)*2%bl;
+                uint8_t g = (i + x + (4-y)*2)*2%bl;
+                uint8_t b = (i - (8 - (x + y)*2))*2%bl;
+#else
+                uint8_t r = 255;
+                uint8_t g = 255;
+                uint8_t b = 255;
 #endif
-#if (0)
-                uint8_t r = random()%bl;
-                uint8_t g = random()%bl;
-                uint8_t b = random()%bl;
-#endif
-                if (i%(bl*2) >= bl) {
+                if  (i%(bl*2) >= bl) {
                     r = r * (bl-i%bl)/bl;
                     g = g * (bl-i%bl)/bl;
                     b = b * (bl-i%bl)/bl;
@@ -107,32 +99,35 @@ int spiWS1812BTest(void)
                     b = b * (i%bl)/bl;
                 }
                 setPixel(x, y, r, g, b);
+                //setPixel(x, y, (i+x+y) & 0x3F, ((i+x+y) >> 6)&0x3F, ((i+y) >> 12)&0x3F);
             }
         }
-        mraa_spi_transfer_buf(spi, buf, NULL, sizeof(buf));
-        //        usleep(20000);
+        mraa_spi_transfer_buf(spi, (uint8_t*)buf, NULL, sizeof(buf));
+        // usleep(50000);
     }
 #endif
+#if (1)
     for (i=0; ; i++) {
         for (y=0; y < LEDMATRIX_YMAX; y++) {
-            for (x=0; x < LEDMATRIX_XMAX*2; x++) {
+            for (x=0; x < LEDMATRIX_XMAX; x++) {
                 uint8_t c;
                 int xr = x + (i % GREETINGS_WIDTH);
                 int br = BRIGHTNESS_LIMIT;
                 c = Greetings[y][xr % GREETINGS_WIDTH];
                 switch (c) {
-                case 0: setPixel(x, y, 0, 0, 0);           break; // BLACK
+                case 0: setPixel(x, y, 0, 0, 0);     break; // BLACK
                 case 1: setPixel(x, y, br, br, br);  break; // WHITE
-                case 2: setPixel(x, y, br, 0, 0);        break; // RED
-                case 3: setPixel(x, y, 0, br, br);     break; // CYAN
-                case 4: setPixel(x, y, br, 0, br);     break; // MAGENTA
-                case 5: setPixel(x, y, 0 ,br, 0);        break; // YELLOW
+                case 2: setPixel(x, y, br, 0, 0);    break; // RED
+                case 3: setPixel(x, y, 0, br, br);   break; // CYAN
+                case 4: setPixel(x, y, br, 0, br);   break; // MAGENTA
+                case 5: setPixel(x, y, 0 ,br, 0);    break; // YELLOW
                 }
             }
         }
-        mraa_spi_transfer_buf(spi, buf, NULL, sizeof(buf));
-        usleep(100000);
+        mraa_spi_transfer_buf(spi, (uint8_t*)buf, NULL, sizeof(buf));
+       usleep(100000);
     }
+#endif
     return 0;
 }
 
@@ -140,7 +135,7 @@ static void setAllPixel(uint8_t r, uint8_t g, uint8_t b)
 {
      int x, y;
 
-     for (y=0; y < LEDMATRIX_YMAX*2; y++) {
+     for (y=0; y < LEDMATRIX_YMAX; y++) {
           for (x=0; x < LEDMATRIX_XMAX; x++) {
                setPixel(x, y, r, g, b);
           }
@@ -151,114 +146,86 @@ static void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b)
 {
     int adr;
 
-    if (x >= 8) {
-        y = y + 8;
-        x = x - 8;
+    if (x >= LEDMATRIX_X) {
+        y = y + LEDMATRIX_Y;
+        x = x - LEDMATRIX_X;
     }
-    adr = y*LEDMATRIX_XMAX*sizeof(Pixel) + x*sizeof(Pixel);
-
-    Pixel pixel = makePixelData(r, g, b);
-    memcpy(buf + adr, &pixel, sizeof(pixel));
+    adr = y*LEDMATRIX_X + x;
+    buf[adr].g = regulateWordBit(g);
+    buf[adr].r = regulateWordBit(r);
+    buf[adr].b = regulateWordBit(b);
 }
 
-static Pixel makePixelData(uint8_t r, uint8_t g, uint8_t b) 
+static uint32_t regulateWordBit(uint8_t in)
 {
-    int i, j, k;
-    const int *signalData = NULL;
-    Pixel result;
-    uint32_t d;
-    r = reverseByteBit(r);
-    g = reverseByteBit(g);
-    b = reverseByteBit(b);
-    d = ((uint32_t)g << 16) | ((uint32_t)r << 8) | ((uint32_t)b << 0);
-    memset(&result, 0, sizeof(result));
-    for (i=0, j=0; i < LEDMATRIX_PIXEL_PER_BIT; i++) {
-        if (d & 0x00800000) {
-            signalData = SIGNAL_BIT_ONE;
-        } else {
-            signalData = SIGNAL_BIT_ZERO;
-        }
-        for (k=0; k < SIGNALS_PER_BIT; k++) {
-            setbitPixData(&result, j++, signalData[k]);
-        }
-        d <<= 1;
-    }
-    return result;
-}
-
-static void setbitPixData(Pixel *pix, int bitno, int isSetBit)
-{
-     int idxByte = bitno / 8;
-     int idxBit = bitno % 8;
-     uint8_t bitmap = 0x80 >> idxBit;
-
-     if (isSetBit) {
-          (pix->pix)[idxByte] |= bitmap;
-     } else {
-          (pix->pix)[idxByte] &= ~bitmap;
-     }
-}
-
-static uint8_t reverseByteBit(uint8_t in)
-{
+    static const uint32_t BRIGHTNESS_TABLE[256] = {
+        0x88888888, 0x8888888e, 0x888888e8, 0x888888ee, 
+        0x88888e88, 0x88888e8e, 0x88888ee8, 0x88888eee, 
+        0x8888e888, 0x8888e88e, 0x8888e8e8, 0x8888e8ee, 
+        0x8888ee88, 0x8888ee8e, 0x8888eee8, 0x8888eeee, 
+        0x888e8888, 0x888e888e, 0x888e88e8, 0x888e88ee, 
+        0x888e8e88, 0x888e8e8e, 0x888e8ee8, 0x888e8eee, 
+        0x888ee888, 0x888ee88e, 0x888ee8e8, 0x888ee8ee, 
+        0x888eee88, 0x888eee8e, 0x888eeee8, 0x888eeeee, 
+        0x88e88888, 0x88e8888e, 0x88e888e8, 0x88e888ee, 
+        0x88e88e88, 0x88e88e8e, 0x88e88ee8, 0x88e88eee, 
+        0x88e8e888, 0x88e8e88e, 0x88e8e8e8, 0x88e8e8ee, 
+        0x88e8ee88, 0x88e8ee8e, 0x88e8eee8, 0x88e8eeee, 
+        0x88ee8888, 0x88ee888e, 0x88ee88e8, 0x88ee88ee, 
+        0x88ee8e88, 0x88ee8e8e, 0x88ee8ee8, 0x88ee8eee, 
+        0x88eee888, 0x88eee88e, 0x88eee8e8, 0x88eee8ee, 
+        0x88eeee88, 0x88eeee8e, 0x88eeeee8, 0x88eeeeee, 
+        0x8e888888, 0x8e88888e, 0x8e8888e8, 0x8e8888ee, 
+        0x8e888e88, 0x8e888e8e, 0x8e888ee8, 0x8e888eee, 
+        0x8e88e888, 0x8e88e88e, 0x8e88e8e8, 0x8e88e8ee, 
+        0x8e88ee88, 0x8e88ee8e, 0x8e88eee8, 0x8e88eeee, 
+        0x8e8e8888, 0x8e8e888e, 0x8e8e88e8, 0x8e8e88ee, 
+        0x8e8e8e88, 0x8e8e8e8e, 0x8e8e8ee8, 0x8e8e8eee, 
+        0x8e8ee888, 0x8e8ee88e, 0x8e8ee8e8, 0x8e8ee8ee, 
+        0x8e8eee88, 0x8e8eee8e, 0x8e8eeee8, 0x8e8eeeee, 
+        0x8ee88888, 0x8ee8888e, 0x8ee888e8, 0x8ee888ee, 
+        0x8ee88e88, 0x8ee88e8e, 0x8ee88ee8, 0x8ee88eee, 
+        0x8ee8e888, 0x8ee8e88e, 0x8ee8e8e8, 0x8ee8e8ee, 
+        0x8ee8ee88, 0x8ee8ee8e, 0x8ee8eee8, 0x8ee8eeee, 
+        0x8eee8888, 0x8eee888e, 0x8eee88e8, 0x8eee88ee, 
+        0x8eee8e88, 0x8eee8e8e, 0x8eee8ee8, 0x8eee8eee, 
+        0x8eeee888, 0x8eeee88e, 0x8eeee8e8, 0x8eeee8ee, 
+        0x8eeeee88, 0x8eeeee8e, 0x8eeeeee8, 0x8eeeeeee, 
+        0xe8888888, 0xe888888e, 0xe88888e8, 0xe88888ee, 
+        0xe8888e88, 0xe8888e8e, 0xe8888ee8, 0xe8888eee, 
+        0xe888e888, 0xe888e88e, 0xe888e8e8, 0xe888e8ee, 
+        0xe888ee88, 0xe888ee8e, 0xe888eee8, 0xe888eeee, 
+        0xe88e8888, 0xe88e888e, 0xe88e88e8, 0xe88e88ee, 
+        0xe88e8e88, 0xe88e8e8e, 0xe88e8ee8, 0xe88e8eee, 
+        0xe88ee888, 0xe88ee88e, 0xe88ee8e8, 0xe88ee8ee, 
+        0xe88eee88, 0xe88eee8e, 0xe88eeee8, 0xe88eeeee, 
+        0xe8e88888, 0xe8e8888e, 0xe8e888e8, 0xe8e888ee, 
+        0xe8e88e88, 0xe8e88e8e, 0xe8e88ee8, 0xe8e88eee, 
+        0xe8e8e888, 0xe8e8e88e, 0xe8e8e8e8, 0xe8e8e8ee, 
+        0xe8e8ee88, 0xe8e8ee8e, 0xe8e8eee8, 0xe8e8eeee, 
+        0xe8ee8888, 0xe8ee888e, 0xe8ee88e8, 0xe8ee88ee, 
+        0xe8ee8e88, 0xe8ee8e8e, 0xe8ee8ee8, 0xe8ee8eee, 
+        0xe8eee888, 0xe8eee88e, 0xe8eee8e8, 0xe8eee8ee, 
+        0xe8eeee88, 0xe8eeee8e, 0xe8eeeee8, 0xe8eeeeee, 
+        0xee888888, 0xee88888e, 0xee8888e8, 0xee8888ee, 
+        0xee888e88, 0xee888e8e, 0xee888ee8, 0xee888eee, 
+        0xee88e888, 0xee88e88e, 0xee88e8e8, 0xee88e8ee, 
+        0xee88ee88, 0xee88ee8e, 0xee88eee8, 0xee88eeee, 
+        0xee8e8888, 0xee8e888e, 0xee8e88e8, 0xee8e88ee, 
+        0xee8e8e88, 0xee8e8e8e, 0xee8e8ee8, 0xee8e8eee, 
+        0xee8ee888, 0xee8ee88e, 0xee8ee8e8, 0xee8ee8ee, 
+        0xee8eee88, 0xee8eee8e, 0xee8eeee8, 0xee8eeeee, 
+        0xeee88888, 0xeee8888e, 0xeee888e8, 0xeee888ee, 
+        0xeee88e88, 0xeee88e8e, 0xeee88ee8, 0xeee88eee, 
+        0xeee8e888, 0xeee8e88e, 0xeee8e8e8, 0xeee8e8ee, 
+        0xeee8ee88, 0xeee8ee8e, 0xeee8eee8, 0xeee8eeee, 
+        0xeeee8888, 0xeeee888e, 0xeeee88e8, 0xeeee88ee, 
+        0xeeee8e88, 0xeeee8e8e, 0xeeee8ee8, 0xeeee8eee, 
+        0xeeeee888, 0xeeeee88e, 0xeeeee8e8, 0xeeeee8ee, 
+        0xeeeeee88, 0xeeeeee8e, 0xeeeeeee8, 0xeeeeeeee,
+    };
     if (in >= BRIGHTNESS_LIMIT) { // limitter
         in = BRIGHTNESS_LIMIT;
     }
-    static const uint8_t BRIGHTNESS_TABLE[256] = {
-        0x00, 0x40, 0x80, 0xc0, 0x10, 0x50, 0x90, 0xd0,
-        0x20, 0x60, 0xa0, 0xe0, 0x30, 0x70, 0xb0, 0xf0, 
-        0x04, 0x44, 0x84, 0xc4, 0x14, 0x54, 0x94, 0xd4, 
-        0x24, 0x64, 0xa4, 0xe4, 0x34, 0x74, 0xb4, 0xf4, 
-        0x08, 0x48, 0x88, 0xc8, 0x18, 0x58, 0x98, 0xd8, 
-        0x28, 0x68, 0xa8, 0xe8, 0x38, 0x78, 0xb8, 0xf8, 
-        0x0c, 0x4c, 0x8c, 0xcc, 0x1c, 0x5c, 0x9c, 0xdc, 
-        0x2c, 0x6c, 0xac, 0xec, 0x3c, 0x7c, 0xbc, 0xfc, 
-        0x01, 0x41, 0x81, 0xc1, 0x11, 0x51, 0x91, 0xd1, 
-        0x21, 0x61, 0xa1, 0xe1, 0x31, 0x71, 0xb1, 0xf1, 
-        0x05, 0x45, 0x85, 0xc5, 0x15, 0x55, 0x95, 0xd5, 
-        0x25, 0x65, 0xa5, 0xe5, 0x35, 0x75, 0xb5, 0xf5, 
-        0x09, 0x49, 0x89, 0xc9, 0x19, 0x59, 0x99, 0xd9, 
-        0x29, 0x69, 0xa9, 0xe9, 0x39, 0x79, 0xb9, 0xf9, 
-        0x0d, 0x4d, 0x8d, 0xcd, 0x1d, 0x5d, 0x9d, 0xdd, 
-        0x2d, 0x6d, 0xad, 0xed, 0x3d, 0x7d, 0xbd, 0xfd, 
-        0x02, 0x42, 0x82, 0xc2, 0x12, 0x52, 0x92, 0xd2, 
-        0x22, 0x62, 0xa2, 0xe2, 0x32, 0x72, 0xb2, 0xf2, 
-        0x06, 0x46, 0x86, 0xc6, 0x16, 0x56, 0x96, 0xd6, 
-        0x26, 0x66, 0xa6, 0xe6, 0x36, 0x76, 0xb6, 0xf6, 
-        0x0a, 0x4a, 0x8a, 0xca, 0x1a, 0x5a, 0x9a, 0xda, 
-        0x2a, 0x6a, 0xaa, 0xea, 0x3a, 0x7a, 0xba, 0xfa, 
-        0x0e, 0x4e, 0x8e, 0xce, 0x1e, 0x5e, 0x9e, 0xde, 
-        0x2e, 0x6e, 0xae, 0xee, 0x3e, 0x7e, 0xbe, 0xfe, 
-        0x03, 0x43, 0x83, 0xc3, 0x13, 0x53, 0x93, 0xd3, 
-        0x23, 0x63, 0xa3, 0xe3, 0x33, 0x73, 0xb3, 0xf3, 
-        0x07, 0x47, 0x87, 0xc7, 0x17, 0x57, 0x97, 0xd7, 
-        0x27, 0x67, 0xa7, 0xe7, 0x37, 0x77, 0xb7, 0xf7, 
-        0x0b, 0x4b, 0x8b, 0xcb, 0x1b, 0x5b, 0x9b, 0xdb, 
-        0x2b, 0x6b, 0xab, 0xeb, 0x3b, 0x7b, 0xbb, 0xfb, 
-        0x0f, 0x4f, 0x8f, 0xcf, 0x1f, 0x5f, 0x9f, 0xdf, 
-        0x2f, 0x6f, 0xaf, 0xef, 0x3f, 0x7f, 0xbf, 0xff,    
-    };
     return BRIGHTNESS_TABLE[in];
-    /* This table is generating by code of followings: */
-    /*
-    int i;
-    uint8_t out = 0;
-    uint8_t result = 0;
-
-    for (i=0; i < 8; i++) {
-        out <<= 1;
-        out |= (in & 0x01);
-        in >>= 1;
-    }
-    for (i=0; i < 4; i++) {
-        int b1, b2;
-        b1 = out & 0x80 ? 1 : 0;
-        b2 = out & 0x40 ? 1 : 0;
-        out <<= 2;
-        result <<= 2;
-        result |= b2 ? 0x02 : 0x00;
-        result |= b1 ? 0x01 : 0x00;
-    }
-    return result;
-    */
 }
