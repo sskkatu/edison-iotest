@@ -1,38 +1,37 @@
 #ifndef __OLED_H__
 #define __OLED_H__
 
-#define SSD_COMMAND_MODE        0x00 /* C0 and DC bit are 0 				 */
-#define SSD_DATA_MODE           0x40 /* C0 bit is 0 and DC bit is 1 */
+#define SSD_COMMAND_MODE            0x00 
+#define SSD_DATA_MODE               0x40 
 
-#define SSD_INVERSE_DISPLAY     0xA7
+#define SSD_INVERSE_DISPLAY         0xA7
 
-#define SSD_DISPLAY_OFF         0xAE
-#define SSD_DISPLAY_ON          0xAF
+#define SSD_DISPLAY_OFF             0xAE
+#define SSD_DISPLAY_ON              0xAF
 
-#define SSD_SET_CONTRASTLEVEL	0x81
+#define SSD_SET_CONTRASTLEVEL	    0x81
 
-#define SSD_External_Vcc        0x01
-#define SSD_Internal_Vcc        0x02
+#define SSD_EXTERNAL_VCC            0x01
+#define SSD_INTERNAL_VCC            0x02
 
+#define SSD_ACTIVATE_SCROLL         0x2F
+#define SSD_DEACTIVATE_SCROLL       0x2E
 
-#define SSD_Activate_Scroll     0x2F
-#define SSD_Deactivate_Scroll   0x2E
+#define SCROLL_LEFT                 0x00
+#define SCROLL_RIGHT                0x01
 
-#define Scroll_Left             0x00
-#define Scroll_Right            0x01
+#define SCROLL_2FRAMES              0x07
+#define SCROLL_3FRAMES              0x04
+#define SCROLL_4FRAMES              0x05
+#define SCROLL_5FRAMES              0x00
+#define SCROLL_25FRAMES             0x06
+#define SCROLL_64FRAMES             0x01
+#define SCROLL_128FRAMES            0x02
+#define SCROLL_256FRAMES            0x03
 
-#define Scroll_2Frames          0x07
-#define Scroll_3Frames          0x04
-#define Scroll_4Frames          0x05
-#define Scroll_5Frames          0x00
-#define Scroll_25Frames         0x06
-#define Scroll_64Frames         0x01
-#define Scroll_128Frames        0x02
-#define Scroll_256Frames        0x03
-
-#define VERTICAL_MODE           01
-#define PAGE_MODE               01
-#define HORIZONTAL_MODE         02
+#define VERTICAL_MODE               01
+#define PAGE_MODE                   01
+#define HORIZONTAL_MODE             02
 
 #define SSD1306_DISPLAYALLON_RESUME 0xA4
 #define SSD1306_DISPLAYALLON        0xA5
@@ -60,6 +59,6 @@
 #define SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL    0x29
 #define SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL     0x2A
 
-#define SSD1308_Normal_Display                          0xA6
+#define SSD1308_NORMAL_DISPLAY                          0xA6
 
 #endif

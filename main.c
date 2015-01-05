@@ -10,7 +10,7 @@ int main(int argc, const char *argv[])
      printf("Board Name: %s\n", board_name);
      // gpioTest();
      //i2cTest();
-     //spiTest();
+     //spiLCDTest();
      //spiWS1812BTest();
      i2cOLEDTest();
      mraa_deinit();

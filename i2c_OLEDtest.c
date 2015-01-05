@@ -6,9 +6,16 @@
 #include "oled_commands.h"
 
 /**
- * DataSheets : 
- * SSD1306 - 
- *  https://www.adafruit.com/datasheets/SSD1306.pdf
+ * Products :
+ *  - http://www.sainsmart.com/sainsmart-1-3-i2c-iic-serial-128x64-white-oled-for-arduino-uno-mega2560.html
+ *  * Unfortunately, there's no sample-code or spec-sheet on above URL. It's very unkind!!!!
+ *
+ * Sample Code :
+ *  - http://www.sainsmart.com/zen/documents/1.3OLED/1.30_OLED.zip
+ *  * This sample-code is for another products, but it will work.
+ *
+ * SSD1306 DataSheets (OLED Driver/Controller IC) : 
+ *  - https://www.adafruit.com/datasheets/SSD1306.pdf
  *
  */
 
@@ -18,10 +25,6 @@
 #define GPIO_I2C1SDA     7 
 #define GPIO_I2C1SCL    19 
 #define GPIO_RESET      10 // Use the SPI-2-CLK as a GPIO-RESET signal
-#define HZ_0001K     10000 // I2C Low-speed Mode  (10K)
-#define HZ_0010K    100000 // I2C Standard Mode   (100K)
-#define HZ_0400K    400000 // I2C Fast Mode       (400K)
-#define HZ_3400K   3400000 // I2C High-speed Mode (3400K)
 
 /* LCD Parammeters */
 #define LCDWIDTH       128
@@ -31,26 +34,28 @@
 #define CONTRAST      0x9F
 #define CHARGEPUMP    0x10
 #define PRECHARGE     0x22
-#define RESET_TIME   10000 // OLED device reset duration (3us in specsheet in atually)
+#define RESET_TIME   10000 // OLED device reset duration 
+                           // (In actually, it needed only 3us according to the specsheet.)
 #define STABLE_WAIT 100000 // Wait the OLED device stabling
-#define BYTE_PER_LCDWIDTH (LCDWIDTH/8) // Byte length per LCD Width
+#define BYTE_PER_LCDWIDTH (LCDWIDTH/8) // Byte length per LCD width
 
 
 /* Private functions */
 static void enablePullup(int gpioport);
 static void resetAndWaitStable(void);
-static void init();
+static void init(void);
 static void sendCommand(uint8_t cmd);
 static void sendCommandByte(uint8_t cmd, uint8_t data);
 static void sendCommandByte2(uint8_t cmd, uint8_t data1, uint8_t data2);
 
 /* Global variables */
 static mraa_i2c_context i2c = NULL;
+
 static uint8_t frameBuf[BYTE_PER_LCDWIDTH*LCDHEIGHT];
 
 int i2cOLEDTest(void)
 {
-    int i;
+    int i, j;
     enablePullup(GPIO_I2C1SDA);		// i2c1 SDA
     enablePullup(GPIO_I2C1SCL);		// i2c1 SCL
 
@@ -59,13 +64,18 @@ int i2cOLEDTest(void)
         fprintf(stderr, "Cannot open i2c port:%d\n", I2CPORT);
         exit(1);
     }
-    mraa_i2c_frequency(i2c, HZ_0400K); // No Effect as of now in mraa.
+
+    mraa_i2c_frequency(i2c, MRAA_I2C_HIGH);
     mraa_i2c_address(i2c, I2CADR);
     init();
     for (i=0; ; i++) {
-        int j;
-        for (j=0; j < sizeof(frameBuf); j++) {
-            frameBuf[j] = i+j;
+        //        for (j=0; j < sizeof(frameBuf) ; j++) {
+        //            frameBuf[j] = 0x5555;
+        //        }
+        int x, y;
+        uint8_t *p = frameBuf;
+        for (j=0; j < 128*8; j++) {
+            p[j] = glcdfont[(j+i*5) % GLCDFONT_DATASIZE];
         }
         display();
     }
@@ -91,10 +101,9 @@ static void init()
 	sendCommandByte(SSD1306_SETCOMPINS, COMPINS);
 	sendCommandByte(SSD_SET_CONTRASTLEVEL, CONTRAST);
 	sendCommandByte(SSD1306_SETPRECHARGE, PRECHARGE);
-	sendCommandByte(SSD1306_SETVCOMDETECT, 0x40);
+   	sendCommandByte(SSD1306_SETVCOMDETECT, 0x40);
 	sendCommand(SSD1306_DISPLAYALLON_RESUME);
 	sendCommand(SSD1306_Normal_Display);
-
     sendCommandByte2(0x21, 0, 127); 
     sendCommandByte2(0x22, 0, 7); 
 	stopscroll();
@@ -122,7 +131,7 @@ void startscrollright(uint8_t start, uint8_t stop)
 	sendCommand(stop);
 	sendCommand(0X01);
 	sendCommand(0XFF);
-	sendCommand(SSD_Activate_Scroll);
+	sendCommand(SSD_ACTIVATE_SCROLL);
 }
 
 void startscrollleft(uint8_t start, uint8_t stop)
@@ -134,9 +143,8 @@ void startscrollleft(uint8_t start, uint8_t stop)
 	sendCommand(stop);
 	sendCommand(0X01);
 	sendCommand(0XFF);
-	sendCommand(SSD_Activate_Scroll);
+	sendCommand(SSD_ACTIVATE_SCROLL);
 }
-
 
 void startscrolldiagright(uint8_t start, uint8_t stop)
 {
@@ -149,7 +157,7 @@ void startscrolldiagright(uint8_t start, uint8_t stop)
 	sendCommand(0X00);
 	sendCommand(stop);
 	sendCommand(0X01);
-	sendCommand(SSD_Activate_Scroll);
+	sendCommand(SSD_ACTIVATE_SCROLL);
 }
 
 void startscrolldiagleft(uint8_t start, uint8_t stop)
@@ -163,12 +171,12 @@ void startscrolldiagleft(uint8_t start, uint8_t stop)
 	sendCommand(0X00);
 	sendCommand(stop);
 	sendCommand(0X01);
-	sendCommand(SSD_Activate_Scroll);
+	sendCommand(SSD_ACTIVATE_SCROLL);
 }
 
 void stopscroll(void)
 {
-	sendCommand(SSD_Deactivate_Scroll);
+	sendCommand(SSD_DEACTIVATE_SCROLL);
 }
 
 void display(void) 

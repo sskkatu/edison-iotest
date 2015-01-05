@@ -50,7 +50,7 @@ typedef union {
 #define MHZ(x) (x * 1000000)
 unsigned char *bitmap = NULL;
 
-int spiTest(void) 
+int spiLCDTest(void) 
 {
     mraa_spi_context spi;
 	int fd;
@@ -66,7 +66,7 @@ int spiTest(void)
         exit(1);
     }
     resetLcd();
-    mraa_spi_frequency(spi, MHZ(4));
+    mraa_spi_frequency(spi, MHZ(80));
     mraa_spi_mode(spi, MRAA_SPI_MODE0);
     initLcd(spi);
     printf("initLcd Done.\n");

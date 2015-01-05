@@ -258,3 +258,6 @@ uint8_t glcdfont[] = {
 	0x00, 0x3C, 0x3C, 0x3C, 0x3C, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 
 };
+
+const int GLCDFONT_DATASIZE = sizeof(glcdfont);
+const int GLCDFONT_MAX = sizeof(glcdfont) / 5;

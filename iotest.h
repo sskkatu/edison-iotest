@@ -3,9 +3,11 @@
 
 // --  External functions
 extern int gpioTest(void);
+
 extern int i2cTest(void);
 extern int i2cOLEDTest(void);
-extern int spiTest(void);
+
+extern int spiLCDTest(void);
 extern int spiWS1812BTest(void);
 
 extern void invertDisplay(uint8_t i);
@@ -20,5 +22,7 @@ extern void clearDisplay(void);
 
 // -- Global resources
 extern uint8_t glcdfont[];
+const int GLCDFONT_DATASIZE;
+const int GLCDFONT_MAX;
 
 #endif
