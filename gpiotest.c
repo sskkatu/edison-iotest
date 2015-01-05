@@ -10,7 +10,7 @@
 
 int gpioTest(void) 
 {
-     int i, j, val = 0;
+    int i, val = 0;
      mraa_gpio_context gpio = mraa_gpio_init(GPIO_PORT);
      if (gpio == NULL) {
           fprintf(stderr, "Cannot open gpio port:%d\n", GPIO_PORT);

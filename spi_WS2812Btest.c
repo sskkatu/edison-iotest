@@ -61,8 +61,7 @@ Pixel buf[LEDMATRIX_XMAX*LEDMATRIX_YMAX];
 
 int spiWS1812BTest(void) 
 {
-    int x, y, i, j;
-    uint32_t c;
+    int x, y, i;
     mraa_spi_context spi;
     spi = mraa_spi_init(SPI_PORT);
 
@@ -75,20 +74,13 @@ int spiWS1812BTest(void)
     mraa_spi_bit_per_word(spi, 32);
     mraa_spi_lsbmode(spi, 0);
 
-#if (1)
     for (i=0;;i++) {
         for ( y = 0; y < 8; y++) {
             for ( x = 0; x < 16; x++) {
                 int bl = BRIGHTNESS_LIMIT;
-#if (1)
                 uint8_t r = (i + (4-x)*2 + y)*2%bl;
                 uint8_t g = (i + x + (4-y)*2)*2%bl;
                 uint8_t b = (i - (8 - (x + y)*2))*2%bl;
-#else
-                uint8_t r = 255;
-                uint8_t g = 255;
-                uint8_t b = 255;
-#endif
                 if  (i%(bl*2) >= bl) {
                     r = r * (bl-i%bl)/bl;
                     g = g * (bl-i%bl)/bl;
@@ -105,9 +97,8 @@ int spiWS1812BTest(void)
         mraa_spi_transfer_buf(spi, (uint8_t*)buf, NULL, sizeof(buf));
         // usleep(50000);
     }
-#endif
-#if (1)
     for (i=0; ; i++) {
+        setAllPixel(0, 0, 0);
         for (y=0; y < LEDMATRIX_YMAX; y++) {
             for (x=0; x < LEDMATRIX_XMAX; x++) {
                 uint8_t c;
@@ -127,7 +118,6 @@ int spiWS1812BTest(void)
         mraa_spi_transfer_buf(spi, (uint8_t*)buf, NULL, sizeof(buf));
        usleep(100000);
     }
-#endif
     return 0;
 }
 

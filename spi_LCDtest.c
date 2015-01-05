@@ -123,6 +123,7 @@ int spiTest(void)
     return 0;
 }
 
+#if (0) // TODO: *Under construction :{ *
 static void drawBitmapfromFile(mraa_spi_context spi, const char* imageFilePath)
 {
      MagickWand *wand = NewMagickWand();
@@ -143,6 +144,7 @@ static void drawBitmapfromFile(mraa_spi_context spi, const char* imageFilePath)
 //          pixelwand = PixelGetNextIteratorRow(pixelIter, );
      }
 }
+#endif
 
 
 static void drawBitmap(mraa_spi_context spi, unsigned char *bmp) 

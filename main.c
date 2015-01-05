@@ -11,7 +11,8 @@ int main(int argc, const char *argv[])
      // gpioTest();
      //i2cTest();
      //spiTest();
-     spiWS1812BTest();
+     //spiWS1812BTest();
+     i2cOLEDTest();
      mraa_deinit();
      exit(0);
 }
