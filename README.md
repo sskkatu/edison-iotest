@@ -2,10 +2,11 @@ edison-iotest
 =============
 Intel edison MRAA-IO (I2C/SPI/UART) testing code.
 
-[Requirement]
+# Requirement
+
 Edison@Debian(ubilinux) + MRAA installed environment
 
-[Testing Devices]
+# Testing Devices
 My confirmed/Confirming devices are as follows :
 * Aitendo I2C Multi Function Sensor [ATD-M4S] - http://www.aitendo.com/product/9551
 * Aitendo SOU 320x240 2.2inch LCD [M-TM022-SPI] - http://www.aitendo.com/product/7277
