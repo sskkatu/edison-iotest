@@ -25,6 +25,6 @@ Confirmed/Confirming devices are as follows:
 ### Future Plans
 
 For more details, I'll add description in the near future.
-* How to setup Edison@Debian + MARR enviroment
+* How to setup Edison@Debian + MRAA enviroment
 * How to build and testing
 * How to connect the above devices
