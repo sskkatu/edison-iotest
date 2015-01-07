@@ -9,7 +9,7 @@
 #define SSD_DISPLAY_OFF             0xAE
 #define SSD_DISPLAY_ON              0xAF
 
-#define SSD_SET_CONTRASTLEVEL	    0x81
+#define SSD_SET_CONTRASTLEVEL       0x81
 
 #define SSD_EXTERNAL_VCC            0x01
 #define SSD_INTERNAL_VCC            0x02

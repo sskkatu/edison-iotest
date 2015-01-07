@@ -53,7 +53,7 @@ unsigned char *bitmap = NULL;
 int spiLCDTest(void) 
 {
     mraa_spi_context spi;
-	int fd;
+    int fd;
     struct stat buf;
     printf("%d\n", sizeof(bit16_color));
     gpio_dc_rcs = mraa_gpio_init(GPIO_DC_RCS_PORT);
@@ -62,7 +62,7 @@ int spiLCDTest(void)
     mraa_gpio_dir(gpio_reset, MRAA_GPIO_OUT);
     spi = mraa_spi_init(SPI_PORT);
     if (spi == NULL) {
-    	fprintf(stderr, "Cannot open SPI port:%d\n", SPI_PORT);
+        fprintf(stderr, "Cannot open SPI port:%d\n", SPI_PORT);
         exit(1);
     }
     resetLcd();
@@ -173,7 +173,7 @@ static void drawBitmap(mraa_spi_context spi, unsigned char *bmp)
 
 static void dspSingleColor(mraa_spi_context spi, unsigned short color)
 {
-	bit16_color buf[SPI_WRITE_BLOCK_MAX / sizeof(bit16_color)];
+    bit16_color buf[SPI_WRITE_BLOCK_MAX / sizeof(bit16_color)];
     unsigned int i;
     memset(buf, 0, sizeof(buf));
     for (i=0; i < sizeof(buf) / sizeof(bit16_color); i++) {

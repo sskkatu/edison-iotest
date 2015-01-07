@@ -56,8 +56,8 @@ static uint8_t frameBuf[BYTE_PER_LCDWIDTH*LCDHEIGHT];
 int i2cOLEDTest(void)
 {
     int i, j;
-    enablePullup(GPIO_I2C1SDA);		// i2c1 SDA
-    enablePullup(GPIO_I2C1SCL);		// i2c1 SCL
+    enablePullup(GPIO_I2C1SDA);        // i2c1 SDA
+    enablePullup(GPIO_I2C1SCL);        // i2c1 SCL
 
     i2c = mraa_i2c_init(I2CPORT);
     if (i2c == NULL) {
@@ -89,25 +89,25 @@ static void init()
 
     resetAndWaitStable();              // Device reset and Wait stable
 
-	sendCommand(SSD_DISPLAY_OFF);
-	sendCommandByte(SSD1306_SETDISPLAYCLOCKDIV, 0x80);
-	sendCommandByte(SSD1306_SETMULTIPLEX, MULTIPLEX); 
-	sendCommandByte(SSD1306_SETDISPLAYOFFSET, 0x00);
-	sendCommand(SSD1306_SETSTARTLINE | 0x00);
-	sendCommandByte(SSD1306_CHARGEPUMP, CHARGEPUMP); 
-	sendCommandByte(SSD1306_MEMORYMODE, 0x00);
-	sendCommand(SSD1306_SEGREMAP | 0x1);
-	sendCommand(SSD1306_COMSCANDEC);
-	sendCommandByte(SSD1306_SETCOMPINS, COMPINS);
-	sendCommandByte(SSD_SET_CONTRASTLEVEL, CONTRAST);
-	sendCommandByte(SSD1306_SETPRECHARGE, PRECHARGE);
-   	sendCommandByte(SSD1306_SETVCOMDETECT, 0x40);
-	sendCommand(SSD1306_DISPLAYALLON_RESUME);
-	sendCommand(SSD1306_Normal_Display);
+    sendCommand(SSD_DISPLAY_OFF);
+    sendCommandByte(SSD1306_SETDISPLAYCLOCKDIV, 0x80);
+    sendCommandByte(SSD1306_SETMULTIPLEX, MULTIPLEX); 
+    sendCommandByte(SSD1306_SETDISPLAYOFFSET, 0x00);
+    sendCommand(SSD1306_SETSTARTLINE | 0x00);
+    sendCommandByte(SSD1306_CHARGEPUMP, CHARGEPUMP); 
+    sendCommandByte(SSD1306_MEMORYMODE, 0x00);
+    sendCommand(SSD1306_SEGREMAP | 0x1);
+    sendCommand(SSD1306_COMSCANDEC);
+    sendCommandByte(SSD1306_SETCOMPINS, COMPINS);
+    sendCommandByte(SSD_SET_CONTRASTLEVEL, CONTRAST);
+    sendCommandByte(SSD1306_SETPRECHARGE, PRECHARGE);
+    sendCommandByte(SSD1306_SETVCOMDETECT, 0x40);
+    sendCommand(SSD1306_DISPLAYALLON_RESUME);
+    sendCommand(SSD1306_Normal_Display);
     sendCommandByte2(0x21, 0, 127); 
     sendCommandByte2(0x22, 0, 7); 
-	stopscroll();
-	sendCommand(SSD_DISPLAY_ON);
+    stopscroll();
+    sendCommand(SSD_DISPLAY_ON);
 
     usleep(5000);
     clearDisplay();
@@ -124,59 +124,59 @@ void invertDisplay(uint8_t i)
 
 void startscrollright(uint8_t start, uint8_t stop)
 {
-	sendCommand(SSD1306_RIGHT_HORIZONTAL_SCROLL);
-	sendCommand(0X00);
-	sendCommand(start);
-	sendCommand(0X00);
-	sendCommand(stop);
-	sendCommand(0X01);
-	sendCommand(0XFF);
-	sendCommand(SSD_ACTIVATE_SCROLL);
+    sendCommand(SSD1306_RIGHT_HORIZONTAL_SCROLL);
+    sendCommand(0X00);
+    sendCommand(start);
+    sendCommand(0X00);
+    sendCommand(stop);
+    sendCommand(0X01);
+    sendCommand(0XFF);
+    sendCommand(SSD_ACTIVATE_SCROLL);
 }
 
 void startscrollleft(uint8_t start, uint8_t stop)
 {
-	sendCommand(SSD1306_LEFT_HORIZONTAL_SCROLL);
-	sendCommand(0X00);
-	sendCommand(start);
-	sendCommand(0X00);
-	sendCommand(stop);
-	sendCommand(0X01);
-	sendCommand(0XFF);
-	sendCommand(SSD_ACTIVATE_SCROLL);
+    sendCommand(SSD1306_LEFT_HORIZONTAL_SCROLL);
+    sendCommand(0X00);
+    sendCommand(start);
+    sendCommand(0X00);
+    sendCommand(stop);
+    sendCommand(0X01);
+    sendCommand(0XFF);
+    sendCommand(SSD_ACTIVATE_SCROLL);
 }
 
 void startscrolldiagright(uint8_t start, uint8_t stop)
 {
-	sendCommand(SSD1306_SET_VERTICAL_SCROLL_AREA);	
-	sendCommand(0X00);
-	sendCommand(LCDHEIGHT);
-	sendCommand(SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL);
-	sendCommand(0X00);
-	sendCommand(start);
-	sendCommand(0X00);
-	sendCommand(stop);
-	sendCommand(0X01);
-	sendCommand(SSD_ACTIVATE_SCROLL);
+    sendCommand(SSD1306_SET_VERTICAL_SCROLL_AREA);    
+    sendCommand(0X00);
+    sendCommand(LCDHEIGHT);
+    sendCommand(SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL);
+    sendCommand(0X00);
+    sendCommand(start);
+    sendCommand(0X00);
+    sendCommand(stop);
+    sendCommand(0X01);
+    sendCommand(SSD_ACTIVATE_SCROLL);
 }
 
 void startscrolldiagleft(uint8_t start, uint8_t stop)
 {
-	sendCommand(SSD1306_SET_VERTICAL_SCROLL_AREA);	
-	sendCommand(0X00);
-	sendCommand(LCDHEIGHT);
-	sendCommand(SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL);
-	sendCommand(0X00);
-	sendCommand(start);
-	sendCommand(0X00);
-	sendCommand(stop);
-	sendCommand(0X01);
-	sendCommand(SSD_ACTIVATE_SCROLL);
+    sendCommand(SSD1306_SET_VERTICAL_SCROLL_AREA);    
+    sendCommand(0X00);
+    sendCommand(LCDHEIGHT);
+    sendCommand(SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL);
+    sendCommand(0X00);
+    sendCommand(start);
+    sendCommand(0X00);
+    sendCommand(stop);
+    sendCommand(0X01);
+    sendCommand(SSD_ACTIVATE_SCROLL);
 }
 
 void stopscroll(void)
 {
-	sendCommand(SSD_DEACTIVATE_SCROLL);
+    sendCommand(SSD_DEACTIVATE_SCROLL);
 }
 
 void display(void) 

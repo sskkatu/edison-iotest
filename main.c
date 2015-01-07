@@ -8,7 +8,7 @@ int main(int argc, const char *argv[])
      mraa_init();
      char *board_name = mraa_get_platform_name();
      printf("Board Name: %s\n", board_name);
-     // gpioTest();
+     //gpioTest();
      //i2cTest();
      //spiLCDTest();
      //spiWS1812BTest();
