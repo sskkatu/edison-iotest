@@ -36,7 +36,7 @@
 #define SSD1306_DISPLAYALLON_RESUME 0xA4
 #define SSD1306_DISPLAYALLON        0xA5
 
-#define SSD1306_Normal_Display      0xA6
+#define SSD1306_NORMAL_DISPLAY      0xA6
 
 #define SSD1306_SETDISPLAYOFFSET    0xD3
 #define SSD1306_SETCOMPINS          0xDA

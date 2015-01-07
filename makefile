@@ -1,5 +1,5 @@
 PROGRAM = ioTest
-SRCS = main.c i2ctest.c gpiotest.c spi_LCDtest.c spi_WS2812Btest.c i2c_OLEDtest.c glcdfont.c
+SRCS = main.c i2ctest.c gpiotest.c spi_LCDtest.c spi_WS2812Btest.c i2c_OLEDtest.c glcdfont.c getipaddr.c
 OBJDIR = obj
 OBJS = $(addprefix $(OBJDIR)/, $(SRCS:%.c=%.o))
 DEPDIR = .dep

@@ -1,6 +1,8 @@
 #ifndef __IOTEST_H__
 #define __IOTEST_H__
 
+#include <stdarg.h>
+
 // --  External functions
 extern int gpioTest(void);
 
@@ -17,7 +19,15 @@ extern void startscrolldiagright(uint8_t start, uint8_t stop);
 extern void startscrolldiagleft(uint8_t start, uint8_t stop);
 extern void stopscroll(void);
 extern void display(void);
-extern void clearDisplay(void);
+extern void displayOff();
+extern void displayOn();
+extern void clearFrameBuffer(void);
+extern void setOLEDPoint(int x, int y);
+extern void resetOLEDPoint(int x, int y);
+extern void setOLEDPixel(int x, int y, int isSet);
+extern void printOLEDText(int x, int y, const char *fmt, ...);
+extern const char* getIPv4AdrString(const char *ifname);
+
 
 
 // -- Global resources

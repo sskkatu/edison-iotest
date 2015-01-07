@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+#include <time.h>
 #include "mraa.h"
 #include "iotest.h"
 #include "oled_commands.h"
+
 
 /**
  * Products :
@@ -55,7 +58,7 @@ static uint8_t frameBuf[BYTE_PER_LCDWIDTH*LCDHEIGHT];
 
 int i2cOLEDTest(void)
 {
-    int i, j;
+    int i, j, k, x, y;
     enablePullup(GPIO_I2C1SDA);        // i2c1 SDA
     enablePullup(GPIO_I2C1SCL);        // i2c1 SCL
 
@@ -68,16 +71,42 @@ int i2cOLEDTest(void)
     mraa_i2c_frequency(i2c, MRAA_I2C_HIGH);
     mraa_i2c_address(i2c, I2CADR);
     init();
-    for (i=0; ; i++) {
+#if (0)
+    for (i=0; i < 60; i++) {
         //        for (j=0; j < sizeof(frameBuf) ; j++) {
         //            frameBuf[j] = 0x5555;
         //        }
-        int x, y;
-        uint8_t *p = frameBuf;
-        for (j=0; j < 128*8; j++) {
-            p[j] = glcdfont[(j+i*5) % GLCDFONT_DATASIZE];
+        clearFrameBuffer();
+        for (j=0; j < 256; j++) {
+            if ((j+1)*6 < sizeof(frameBuf)) {
+                for (k=0; k < 5; k++) {
+                    frameBuf[j*6 + k] = glcdfont[(j+i)%0x100*5+k];
+                }
+                frameBuf[j*6+5] = 0x00;
+            }
         }
         display();
+    }
+#endif
+    while (1) {
+        time_t timer;
+        struct tm *local;
+        struct tm *utc;
+        clearFrameBuffer();
+        printOLEDText(1,  1, "Hello, Edison.");
+        printOLEDText(1, 16, "IP : %s", getIPv4AdrString("wlan0"));
+        timer = time(NULL);
+        local = localtime(&timer);
+        printOLEDText(3, 32, "Date : %04d/%02d/%02d", 
+                      local->tm_year + 1900,
+                      local->tm_mon + 1,
+                      local->tm_mday);
+        printOLEDText(3, 44, "Time :   %02d:%02d:%02d",
+                      local->tm_hour,
+                      local->tm_min,
+                      local->tm_sec);
+        display();
+        usleep(50000);
     }
     mraa_i2c_stop(i2c);
     return 0;
@@ -85,15 +114,15 @@ int i2cOLEDTest(void)
 
 static void init() 
 {
-    memset(frameBuf, 0, sizeof(frameBuf));
 
     resetAndWaitStable();              // Device reset and Wait stable
 
     sendCommand(SSD_DISPLAY_OFF);
+    stopscroll();
     sendCommandByte(SSD1306_SETDISPLAYCLOCKDIV, 0x80);
     sendCommandByte(SSD1306_SETMULTIPLEX, MULTIPLEX); 
     sendCommandByte(SSD1306_SETDISPLAYOFFSET, 0x00);
-    sendCommand(SSD1306_SETSTARTLINE | 0x00);
+    sendCommand(SSD1306_SETSTARTLINE | 0);
     sendCommandByte(SSD1306_CHARGEPUMP, CHARGEPUMP); 
     sendCommandByte(SSD1306_MEMORYMODE, 0x00);
     sendCommand(SSD1306_SEGREMAP | 0x1);
@@ -103,14 +132,90 @@ static void init()
     sendCommandByte(SSD1306_SETPRECHARGE, PRECHARGE);
     sendCommandByte(SSD1306_SETVCOMDETECT, 0x40);
     sendCommand(SSD1306_DISPLAYALLON_RESUME);
-    sendCommand(SSD1306_Normal_Display);
+    sendCommand(SSD1306_NORMAL_DISPLAY);
     sendCommandByte2(0x21, 0, 127); 
-    sendCommandByte2(0x22, 0, 7); 
-    stopscroll();
-    sendCommand(SSD_DISPLAY_ON);
-
+    sendCommandByte2(0x22, 0, 127); 
+    // clear display 
+    clearFrameBuffer();
+    display();
     usleep(5000);
-    clearDisplay();
+    sendCommand(SSD_DISPLAY_ON);
+}
+
+
+void clearFrameBuffer(void) 
+{
+    memset(frameBuf, 0, sizeof(frameBuf));
+}
+
+void printOLEDText(int x, int y, const char *fmt, ...)
+{
+    char textbuf[80];
+    char *text = textbuf;
+    va_list arg;
+    int ix, iy;
+    unsigned char c;
+    uint8_t *fontdata;
+    uint8_t bitmap;
+
+    va_start(arg, fmt);
+    vsnprintf(textbuf, sizeof(textbuf), fmt, arg);
+    va_end(arg);
+
+    while ((c = *text++) != '\0') {
+        fontdata = glcdfont+c*5;
+        for (ix = 0; ix < 6; ix++) {
+            if (ix < 5) {
+                bitmap = fontdata[ix];
+            } else {
+                bitmap = 0x00;
+            }
+            for (iy = 0; iy < 8; iy++) {
+                setOLEDPixel(x + ix, y+iy, bitmap & 0x01);
+                bitmap >>= 1;
+            }
+        }
+        x += 6;
+    }
+}
+
+void setOLEDPoint(int x, int y) 
+{
+    setOLEDPixel(x, y, 1);
+}
+
+void resetOLEDPoint(int x, int y) 
+{
+    setOLEDPixel(x, y, 0);
+}
+
+
+void setOLEDPixel(int x, int y, int isSet) 
+{
+    uint8_t *base = frameBuf;
+    uint8_t bitmap;
+    if (x < 0 || LCDWIDTH <= x || y < 0 || LCDHEIGHT <= y) {
+        return;
+    }
+
+    base += (y/8)*LCDWIDTH + x;
+    bitmap = 0x01 << (y % 8);
+
+    if (isSet) {
+        *base |= bitmap;
+    } else {
+        *base &= ~bitmap;
+    }
+}
+
+void displayOff()
+{
+    sendCommand(SSD_DISPLAY_OFF);
+}
+
+void displayOn()
+{
+    sendCommand(SSD_DISPLAY_ON);
 }
 
 void invertDisplay(uint8_t i) 
@@ -118,7 +223,7 @@ void invertDisplay(uint8_t i)
     if (i) {
         sendCommand(SSD_INVERSE_DISPLAY);
     } else {
-        sendCommand(SSD1306_Normal_Display);
+        sendCommand(SSD1306_NORMAL_DISPLAY);
     }
 }
 
@@ -183,38 +288,25 @@ void display(void)
 {
     int i, j;
     uint8_t buf[BYTE_PER_LCDWIDTH+1];
+    uint8_t dummyBuf[3+1];
     uint8_t *pbuf = frameBuf;
+
+    memset(dummyBuf, 0, sizeof(dummyBuf));
+    dummyBuf[0] = 0x40;
 
     sendCommand(SSD1306_SETLOWCOLUMN  | 0x0); // low col = 0
     sendCommand(SSD1306_SETHIGHCOLUMN | 0x0); // hi col = 0
     sendCommand(SSD1306_SETSTARTLINE  | 0x0); // line #0    
     
-    for (i=0; i < 8; i++) {
-        sendCommandByte2(0xB0 + i, 0, 0x10);
-        for (j = 0; j < 8; j++) {
+    for (i=0; i < LCDHEIGHT/8; i++) {
+        sendCommandByte2(0xB0+i, 0, 0x10);
+        // W/A for left 3-vertial column could not displayed
+        mraa_i2c_write(i2c, dummyBuf, sizeof(dummyBuf));
+        for (j = 0; j < LCDWIDTH/BYTE_PER_LCDWIDTH; j++) {
             buf[0] = 0x40;
             memcpy(&buf[1], pbuf, BYTE_PER_LCDWIDTH);
             mraa_i2c_write(i2c, buf, sizeof(buf));
             pbuf += BYTE_PER_LCDWIDTH;
-        }
-    }
-}
-
-void clearDisplay(void) 
-{
-    int i, j;
-    uint8_t buf[BYTE_PER_LCDWIDTH+2];
-
-    sendCommand(SSD1306_SETLOWCOLUMN  | 0x0); // low col = 0
-    sendCommand(SSD1306_SETHIGHCOLUMN | 0x0); // hi col = 0
-    sendCommand(SSD1306_SETSTARTLINE  | 0x0); // line #0    
-
-    buf[0] = 0x40;
-    memset(&buf[1], 0, BYTE_PER_LCDWIDTH+1); // Add extra 4bit(+1)
-    for (i=0; i < 8; i++) {
-        sendCommandByte2(0xB0 + i, 0, 0x10);
-        for (j = 0; j < 8; j++) {
-            mraa_i2c_write(i2c, buf, sizeof(buf));
         }
     }
 }
@@ -255,7 +347,6 @@ static void resetAndWaitStable(void)
      mraa_gpio_write(gpio, 1);
      usleep(STABLE_WAIT);  // Wait for the device stable
 }
-
 
 static void enablePullup(int gpioport)
 {
