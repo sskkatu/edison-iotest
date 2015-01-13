@@ -3,20 +3,20 @@
 #include <stdarg.h>
 #include "oled_ssd1306.hpp"
 #include "glcdfont.hpp"
-#include "oled_commands.hpp"
+#include "oled_ssd1306_commands.hpp"
 
-using namespace SSD1306_CMDS;
+using namespace oled_ssd1306_commands;
+using namespace putmode;
 
-void OLED_ssd1306::resetDevice(void) {
+void Oled::resetDevice(void) {
     gpioReset->write(0);  
     usleep(RESET_TIME);        // Wait for reset duration
     gpioReset->write(1);     
     usleep(STABLE_WAIT_TIME);  // Wait for the device stabling
 }
 
-void OLED_ssd1306::initializeDevice() {
-    displayOff();
-    stopscroll();
+void Oled::initializeDevice() {
+    stopDisplay();
     sendCommand(SSD1306_SETDISPLAYCLOCKDIV, 0x80);
     sendCommand(SSD1306_SETMULTIPLEX, MULTIPLEX);
     sendCommand(SSD1306_SETDISPLAYOFFSET, 0x00);
@@ -33,12 +33,13 @@ void OLED_ssd1306::initializeDevice() {
     sendCommand(SSD1306_NORMAL_DISPLAY);
     sendCommand(0x21, 0, 127);
     sendCommand(0x22, 0, 127);
-    flushDisplay();
-    usleep(5000);
-    displayOn();
+    sendCommand(SSD_DEACTIVATE_SCROLL);
+    update();
+
+    startDisplay();
 }
 
-void OLED_ssd1306::flushDisplay(void) {
+void Oled::update(void) {
     int i, j;
     uint8_t buf[BYTE_PER_LCDWIDTH+1] = {};
     uint8_t dummyBuf[3+1] = {};
@@ -62,11 +63,11 @@ void OLED_ssd1306::flushDisplay(void) {
     }
 }
 
-void OLED_ssd1306::clearScreen(void) {
+void Oled::clearScreen(void) {
     memset(frameBuf, 0, WIDTH/8 * HEIGHT);
 }
 
-void OLED_ssd1306::putRect(int x1, int y1, int x2, int y2, PutMode mode) {
+void Oled::putRect(int x1, int y1, int x2, int y2, PutMode mode) {
     int minX, minY,  maxX, maxY, x, y;
 
     minX = std::min(x1, x2);
@@ -76,33 +77,58 @@ void OLED_ssd1306::putRect(int x1, int y1, int x2, int y2, PutMode mode) {
     
     for (x = minX; x <= maxX; x++) {
         for (y = minY; y <= maxY; y++) {
-            setPixelPutMode(x, y, mode);
+            putPixel(x, y, mode);
         }
     }
 }
 
-void OLED_ssd1306::putLine(int x0, int y0, int x1, int y1, PutMode mode) {
+
+void Oled::putCircle(int x0, int y0, int r, PutMode mode) {
+    int x = r;
+    int y = 0;
+    int err = 1 - x;
+
+    while (x >= y) {
+        putPixel( x+x0,  y+y0, mode);
+        putPixel( y+x0,  x+y0, mode);
+        putPixel(-x+x0,  y+y0, mode);
+        putPixel(-y+x0,  x+y0, mode);
+        putPixel(-x+x0, -y+y0, mode);
+        putPixel(-y+x0, -x+y0, mode);
+        putPixel( x+x0, -y+y0, mode);
+        putPixel( y+x0, -x+y0, mode);
+        y++;
+        if (err < 0) {
+            err += 2*y + 1;
+        } else {
+            x--;
+            err += 2*(y - x - 1);
+        }
+    }
+}
+
+void Oled::putLine(int x1, int y1, int x2, int y2, PutMode mode) {
     int steep, x, y, dx, dy, err, ystep;
 
-    steep = abs(y1-y0) > abs(x1-x0);
+    steep = (abs(y2-y1) > abs(x2-x1)) ? 1 : 0;
     if (steep) {
-        std::swap(x0, y0);
         std::swap(x1, y1);
+        std::swap(x2, y2);
     }
-    if (x0 > x1) {
-        std::swap(x0, x1);
-        std::swap(y0, y1);
+    if (x1 > x2) {
+        std::swap(x1, x2);
+        std::swap(y1, y2);
     }
-    dx = x1 - x0;
-    dy = abs(y1-y0);
+    dx = x2 - x1;
+    dy = abs(y2-y1);
     err = dx / 2;
-    y = y0;
-    ystep = (y0 < y1) ? 1 : -1;
-    for (x = x0; x <= x1; x++) {
+    y = y1;
+    ystep = (y1 < y2) ? 1 : -1;
+    for (x = x1; x <= x2; x++) {
         if (steep) {
-            setPixelPutMode(y, x, mode);
+            putPixel(y, x, mode);
         } else {
-            setPixelPutMode(x, y, mode);
+            putPixel(x, y, mode);
         }
         err = err - dy;
         if (err < 0) {
@@ -112,15 +138,15 @@ void OLED_ssd1306::putLine(int x0, int y0, int x1, int y1, PutMode mode) {
     }
 }
 
-void OLED_ssd1306::setPixelPutMode(int x, int y, PutMode mode) {
+void Oled::putPixel(int x, int y, PutMode mode) {
     int c;
 
     switch (mode) {
     case SET:
-        setPixel(x,y);
+        setPixel(x,y, 1);
         break;
     case RESET:
-        resetPixel(x,y);
+        setPixel(x,y, 0);
         break;
     case XOR:
         c = getPixel(x, y);
@@ -129,7 +155,7 @@ void OLED_ssd1306::setPixelPutMode(int x, int y, PutMode mode) {
     }
 }
 
-void OLED_ssd1306::putTextFormat(int x, int y, const char *fmt, ...) {
+void Oled::putTextFormat(int x, int y, const char *fmt, ...) {
     char textbuf[80];
     va_list arg;
 
@@ -140,7 +166,7 @@ void OLED_ssd1306::putTextFormat(int x, int y, const char *fmt, ...) {
     putTextString(x, y, TEXT_XOR, textbuf);
 }
 
-void OLED_ssd1306::putTextFormat(int x, int y, TextPutMode mode, const char *fmt, ...) {
+void Oled::putTextFormat(int x, int y, TextPutMode mode, const char *fmt, ...) {
     char textbuf[80];
     va_list arg;
 
@@ -151,11 +177,11 @@ void OLED_ssd1306::putTextFormat(int x, int y, TextPutMode mode, const char *fmt
     putTextString(x, y, mode, textbuf);
 }
 
-void OLED_ssd1306::putTextString(int x, int y, const char *text)  {
+void Oled::putTextString(int x, int y, const char *text)  {
     putTextString(x, y, TEXT_XOR, text);
 }
 
-void OLED_ssd1306::putTextString(int x, int y, TextPutMode mode, const char *text) {
+void Oled::putTextString(int x, int y, TextPutMode mode, const char *text) {
     unsigned char c, b, bi;
     int ix, iy;
     uint8_t bitmap;
@@ -193,15 +219,7 @@ void OLED_ssd1306::putTextString(int x, int y, TextPutMode mode, const char *tex
     }
 }
 
-void OLED_ssd1306::setPixel(int x, int y) {
-    setPixel(x, y, 1);
-}
-
-void OLED_ssd1306::resetPixel(int x, int y) {
-    setPixel(x, y, 0);
-}
-
-void OLED_ssd1306::setPixel(int x, int y, int isSet) {
+void Oled::setPixel(int x, int y, int isSet) {
     uint8_t *base = frameBuf;
     uint8_t bitmap;
     if (x < 0 || WIDTH <= x || y < 0 || HEIGHT <= y) {
@@ -218,7 +236,7 @@ void OLED_ssd1306::setPixel(int x, int y, int isSet) {
     }
 }
 
-int OLED_ssd1306::getPixel(int x, int y) {
+int Oled::getPixel(int x, int y) {
     uint8_t *base = frameBuf;
     uint8_t bitmap;
     if (x < 0 || WIDTH <= x || y < 0 || HEIGHT <= y) {
@@ -234,68 +252,15 @@ int OLED_ssd1306::getPixel(int x, int y) {
     return 0;
 }
 
-
-void OLED_ssd1306::startScrollRight(uint8_t start, uint8_t stop) {
-    sendCommand(SSD1306_RIGHT_HORIZONTAL_SCROLL);
-    sendCommand(0X00);
-    sendCommand(start);
-    sendCommand(0X00);
-    sendCommand(stop);
-    sendCommand(0X01);
-    sendCommand(0XFF);
-    sendCommand(SSD_ACTIVATE_SCROLL);
-}
-
-void OLED_ssd1306::startScrollLeft(uint8_t start, uint8_t stop) {
-    sendCommand(SSD1306_LEFT_HORIZONTAL_SCROLL);
-    sendCommand(0X00);
-    sendCommand(start);
-    sendCommand(0X00);
-    sendCommand(stop);
-    sendCommand(0X01);
-    sendCommand(0XFF);
-    sendCommand(SSD_ACTIVATE_SCROLL);
-}
-
-void OLED_ssd1306::startScrollDiagRight(uint8_t start, uint8_t stop) {
-    sendCommand(SSD1306_SET_VERTICAL_SCROLL_AREA);
-    sendCommand(0X00);
-    sendCommand(HEIGHT);
-    sendCommand(SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL);
-    sendCommand(0X00);
-    sendCommand(start);
-    sendCommand(0X00);
-    sendCommand(stop);
-    sendCommand(0X01);
-    sendCommand(SSD_ACTIVATE_SCROLL);
-}
-
-void OLED_ssd1306::startScrollDiagLeft(uint8_t start, uint8_t stop) {
-    sendCommand(SSD1306_SET_VERTICAL_SCROLL_AREA);
-    sendCommand(0X00);
-    sendCommand(HEIGHT);
-    sendCommand(SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL);
-    sendCommand(0X00);
-    sendCommand(start);
-    sendCommand(0X00);
-    sendCommand(stop);
-    sendCommand(0X01);
-    sendCommand(SSD_ACTIVATE_SCROLL);
-}
-
-void OLED_ssd1306::stopscroll(void) {
-    sendCommand(SSD_DEACTIVATE_SCROLL);
-}
-
-void OLED_ssd1306::displayOff(void) {
+void Oled::stopDisplay(void) {
     sendCommand(SSD_DISPLAY_OFF);
 }
 
-void OLED_ssd1306::displayOn(void) {
+void Oled::startDisplay(void) {
     sendCommand(SSD_DISPLAY_ON);
 }
 
-void OLED_ssd1306::invertDisplay(uint8_t i) {
+void Oled::invertDisplay(uint8_t i) {
     if (i) {
         sendCommand(SSD_INVERSE_DISPLAY);
     } else {
@@ -303,14 +268,14 @@ void OLED_ssd1306::invertDisplay(uint8_t i) {
     }
 }
 
-mraa_result_t OLED_ssd1306::sendCommand(uint8_t cmd) {
+mraa_result_t Oled::sendCommand(uint8_t cmd) {
     uint8_t buf[2];
     buf[0] = SSD_COMMAND_MODE;
     buf[1] = cmd;
     return i2c->write(buf, sizeof(buf));
 }
 
-mraa_result_t OLED_ssd1306::sendCommand(uint8_t cmd, uint8_t d1) {
+mraa_result_t Oled::sendCommand(uint8_t cmd, uint8_t d1) {
     uint8_t buf[3];
     buf[0] = SSD_COMMAND_MODE;
     buf[1] = cmd;
@@ -318,7 +283,7 @@ mraa_result_t OLED_ssd1306::sendCommand(uint8_t cmd, uint8_t d1) {
     return  i2c->write(buf, sizeof(buf));
 }
 
-mraa_result_t OLED_ssd1306::sendCommand(uint8_t cmd, uint8_t d1, uint8_t d2) {
+mraa_result_t Oled::sendCommand(uint8_t cmd, uint8_t d1, uint8_t d2) {
     uint8_t buf[4];
     buf[0] = SSD_COMMAND_MODE;
     buf[1] = cmd;

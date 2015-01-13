@@ -12,7 +12,7 @@ DEPENDS = $(addprefix $(DEPDIR)/, $(LIBSRCS:%.cpp=%.d))
 .PHONY : all clean depend setsuid
 
 CPP = g++
-CPPFLAGS =-std=c++11 -Wall -O2 -I/usr/local/include
+CPPFLAGS = -std=c++11 -Wall -O2 -I/usr/local/include
 
 all : $(LIBS) $(TEST)
 

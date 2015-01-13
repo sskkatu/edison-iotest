@@ -2,7 +2,7 @@
 
 #pragma once
 
-namespace SSD1306_CMDS{
+namespace oled_ssd1306_commands {
     const uint8_t SSD_COMMAND_MODE            = 0x00;
     const uint8_t SSD_DATA_MODE               = 0x40;
     const uint8_t SSD_INVERSE_DISPLAY         = 0xA7;
