@@ -19,7 +19,7 @@ all : $(LIBS) $(TEST)
 depend : $(DEPENDS)
 
 clean :
-	rm -f $(LIBS) $(TEST) *~ #*#
+	rm -f $(LIBS) $(TEST) test.o *~ #*#
 	rm -rf $(OBJDIR) $(DEPDIR)
 
 $(TEST) : $(LIBS) test.o
