@@ -66,7 +66,7 @@ int spiLCDTest(void)
         exit(1);
     }
     resetLcd();
-    mraa_spi_frequency(spi, MHZ(80));
+    mraa_spi_frequency(spi, MHZ(33));
     mraa_spi_mode(spi, MRAA_SPI_MODE0);
     initLcd(spi);
     printf("initLcd Done.\n");
@@ -79,7 +79,7 @@ int spiLCDTest(void)
     bitmap = malloc(buf.st_size);
     read(fd, bitmap, buf.st_size);
 
-//    while (1) {
+    while (1) {
          bit16_color col;
          printf("1) GREEN\n");
          col.s = 0x0000;
@@ -119,7 +119,7 @@ int spiLCDTest(void)
          dspSingleColor(spi, col.s);
          printf("9) Draw Bitmap\n");
          drawBitmap(spi, bitmap);
-//    }
+    }
     return 0;
 }
 

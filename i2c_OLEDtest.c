@@ -59,6 +59,7 @@ static uint8_t frameBuf[BYTE_PER_LCDWIDTH*LCDHEIGHT];
 int i2cOLEDTest(void)
 {
     int i, j, k, x, y;
+    int sec_prev = -1, flg = 0;
     enablePullup(GPIO_I2C1SDA);        // i2c1 SDA
     enablePullup(GPIO_I2C1SCL);        // i2c1 SCL
 
@@ -68,11 +69,11 @@ int i2cOLEDTest(void)
         exit(1);
     }
 
-    mraa_i2c_frequency(i2c, MRAA_I2C_HIGH);
+    mraa_i2c_frequency(i2c, MRAA_I2C_FAST);
     mraa_i2c_address(i2c, I2CADR);
     init();
 #if (0)
-    for (i=0; i < 60; i++) {
+    for (i=0;; i++) {
         //        for (j=0; j < sizeof(frameBuf) ; j++) {
         //            frameBuf[j] = 0x5555;
         //        }
@@ -87,11 +88,12 @@ int i2cOLEDTest(void)
         }
         display();
     }
-#endif
+#else
     while (1) {
         time_t timer;
         struct tm *local;
         struct tm *utc;
+        const char *ROT = "|/-\\*";
         clearFrameBuffer();
         printOLEDText(1,  1, "Hello, Edison.");
         printOLEDText(1, 16, "IP : %s", getIPv4AdrString("wlan0"));
@@ -105,9 +107,14 @@ int i2cOLEDTest(void)
                       local->tm_hour,
                       local->tm_min,
                       local->tm_sec);
+
+        flg++;
+        printOLEDText(112, 1, "%c", ROT[flg%5]);
+        sec_prev = local->tm_sec;
+
         display();
-        usleep(50000);
     }
+#endif
     mraa_i2c_stop(i2c);
     return 0;
 }

@@ -8,6 +8,7 @@ extern int gpioTest(void);
 
 extern int i2cTest(void);
 extern int i2cOLEDTest(void);
+extern void uartGpsTest(void);
 
 extern int spiLCDTest(void);
 extern int spiWS1812BTest(void);

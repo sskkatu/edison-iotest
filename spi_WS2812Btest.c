@@ -17,7 +17,7 @@
 //#define LEDMATRIX_XMAX 8 // Whole Matrix X Size
 #define LEDMATRIX_XMAX 16 // Whole Matrix X Size
 #define LEDMATRIX_YMAX 8  // Whole Matrix Y Size
-#define BRIGHTNESS_LIMIT 0xc0
+#define BRIGHTNESS_LIMIT 0xE0
 
 // One Pixel Data
 typedef struct {
@@ -74,6 +74,7 @@ int spiWS1812BTest(void)
     mraa_spi_bit_per_word(spi, 32);
     mraa_spi_lsbmode(spi, 0);
 
+#if (1)
     for (i=0;;i++) {
         for ( y = 0; y < 8; y++) {
             for ( x = 0; x < 16; x++) {
@@ -81,7 +82,9 @@ int spiWS1812BTest(void)
                 uint8_t r = (i + (4-x)*2 + y)*2%bl;
                 uint8_t g = (i + x + (4-y)*2)*2%bl;
                 uint8_t b = (i - (8 - (x + y)*2))*2%bl;
-                if  (i%(bl*2) >= bl) {
+//		r = g = b = bl;
+#if (1)
+		if  (i%(bl*2) > bl) {
                     r = r * (bl-i%bl)/bl;
                     g = g * (bl-i%bl)/bl;
                     b = b * (bl-i%bl)/bl;
@@ -90,13 +93,15 @@ int spiWS1812BTest(void)
                     g = g * (i%bl)/bl;
                     b = b * (i%bl)/bl;
                 }
+#endif
                 setPixel(x, y, r, g, b);
                 //setPixel(x, y, (i+x+y) & 0x3F, ((i+x+y) >> 6)&0x3F, ((i+y) >> 12)&0x3F);
             }
         }
         mraa_spi_transfer_buf(spi, (uint8_t*)buf, NULL, sizeof(buf));
-        // usleep(50000);
+        //usleep(100);
     }
+#endif
     for (i=0; ; i++) {
         setAllPixel(0, 0, 0);
         for (y=0; y < LEDMATRIX_YMAX; y++) {

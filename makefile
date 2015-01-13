@@ -1,12 +1,18 @@
 PROGRAM = ioTest
-SRCS = main.c i2ctest.c gpiotest.c spi_LCDtest.c spi_WS2812Btest.c i2c_OLEDtest.c glcdfont.c getipaddr.c
+SRCS += main.c 
+SRCS += i2ctest.c gpiotest.c 
+SRCS += i2c_OLEDtest.c
+SRCS += spi_LCDtest.c spi_WS2812Btest.c 
+SRCS += uart_GPStest.c
+SRCS += glcdfont.c getipaddr.c 
+
 OBJDIR = obj
 OBJS = $(addprefix $(OBJDIR)/, $(SRCS:%.c=%.o))
 DEPDIR = .dep
 DEPENDS = $(addprefix $(DEPDIR)/, $(SRCS:%.c=%.d))
 
 .SUFFIXES : .d .o .c
-.PHONY : all clean depend
+.PHONY : all clean depend setsuid
 
 CC = gcc
 CFLAGS = -Wall -O2 -I/usr/include/ImageMagick/  -I/usr/local/include
