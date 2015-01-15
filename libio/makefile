@@ -1,7 +1,16 @@
 TEST = test
 LIBS = libDevices.so
-LIBSRCS += oled_ssd1306.cpp
+
+# Display Device
 LIBSRCS += glcdfont.cpp
+LIBSRCS += oled_ssd1306.cpp
+LIBSRCS += lcd_ILI9340.cpp
+
+# Sensor Device
+LIBSRCS += accelerometer.cpp
+LIBSRCS += barometer.cpp
+LIBSRCS += compass.cpp
+LIBSRCS += gps.cpp
 
 OBJDIR = obj
 OBJS = $(addprefix $(OBJDIR)/, $(LIBSRCS:%.cpp=%.o))
@@ -19,11 +28,10 @@ all : $(LIBS) $(TEST)
 depend : $(DEPENDS)
 
 clean :
-	rm -f $(LIBS) $(TEST) test.o *~ #*#
+	rm -f $(LIBS) $(TEST) test.o *~ \#*\#
 	rm -rf $(OBJDIR) $(DEPDIR)
 
 $(TEST) : $(LIBS) test.o
-	$(CPP) $(CPPFLAGS) -c test.cpp 
 	$(CPP) $(OBJS) test.o -o $(TEST) -lmraa
 
 $(LIBS) : $(OBJS)

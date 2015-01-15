@@ -9,7 +9,7 @@
  *     http://aitendo3.sakura.ne.jp/aitendo_data/product_img/sensor/multi/GY80/l3g4200d.pdf
  *
  * 2) 3-Axis Accelerometer/Analog Devices ADXL345
- *    http://aitendo3.sakura.ne.jp/aitendo_data/product_img/sensor/multi/GY80/ADXL345.pdfk
+ *    http://aitendo3.sakura.ne.jp/aitendo_data/product_img/sensor/multi/GY80/ADXL345.pdf
  *
  * 3) 3 Axis Magnetometer/Honeywell MC5883L
  *    http://aitendo3.sakura.ne.jp/aitendo_data/product_img/sensor/multi/GY80/MC5883L.pdf

@@ -10,14 +10,14 @@ namespace putmode {
         TEXT_OR,
         TEXT_XOR,
     } TextPutMode;
-
     typedef enum {
         SET,
         RESET,
         XOR,
     } PutMode;
 }
-
+using namespace mraa;
+using namespace putmode;
 
 /**
  * Products :
@@ -51,8 +51,8 @@ private:
     static const uint8_t CHARGEPUMP    =    0x10;
     static const uint8_t PRECHARGE     =    0x22;
 
-    mraa::I2c* i2c;
-    mraa::Gpio* gpioReset;
+    I2c* i2c;
+    Gpio* gpioReset;
     uint8_t *frameBuf;
 
     void resetDevice(void);
@@ -65,11 +65,11 @@ public:
     Oled(int i2cBusNo = DEFAULT_I2C_BUS_NO, 
          uint8_t i2cAddress = DEFAULT_I2C_ADDRESS, 
          int gpioResetPinNo = DEFAULT_GPIO_RESET_PIN) {
-        i2c = new mraa::I2c(i2cBusNo);
+        i2c = new I2c(i2cBusNo);
         i2c->address(i2cAddress);
         i2c->frequency(MRAA_I2C_FAST);
-        gpioReset = new mraa::Gpio(gpioResetPinNo);
-        gpioReset->dir(mraa::DIR_OUT);
+        gpioReset = new Gpio(gpioResetPinNo);
+        gpioReset->dir(DIR_OUT);
         frameBuf = new uint8_t[WIDTH/8 * HEIGHT] {};
         resetDevice();
         initializeDevice();
@@ -88,13 +88,13 @@ public:
 
     void clearScreen(void);
     void putTextFormat(int x, int y, const char *fmt, ...);
-    void putTextFormat(int x, int y, putmode::TextPutMode mode, const char *fmt, ...);
+    void putTextFormat(int x, int y, TextPutMode mode, const char *fmt, ...);
     void putTextString(int x, int y, const char *text);
-    void putTextString(int x, int y, putmode::TextPutMode mode, const char *text);
-    void putRect(int x1, int y1, int x2, int y2, putmode::PutMode mode = putmode::SET);
-    void putLine(int x1, int y1, int x2, int y2, putmode::PutMode mode = putmode::SET);
-    void putCircle(int x, int y, int r, putmode::PutMode mode = putmode::SET);
+    void putTextString(int x, int y, TextPutMode mode, const char *text);
+    void putRect(int x1, int y1, int x2, int y2, PutMode mode = SET);
+    void putLine(int x1, int y1, int x2, int y2, PutMode mode = SET);
+    void putCircle(int x, int y, int r, PutMode mode = SET);
     void setPixel(int x, int y, int isSet=1);
-    void putPixel(int x, int y, putmode::PutMode mode = putmode::SET);
+    void putPixel(int x, int y, PutMode mode = SET);
     int  getPixel(int x, int y);
 };

@@ -22,7 +22,7 @@ all : $(PROGRAM)
 depend : $(DEPENDS)
 
 clean :
-	rm -f $(PROGRAM) *~ #*#
+	rm -f $(PROGRAM) *~ \#*\#
 	rm -rf $(OBJDIR) $(DEPDIR)
 
 $(PROGRAM) : $(OBJS)
