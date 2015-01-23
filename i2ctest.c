@@ -21,7 +21,8 @@
 #define I2CADR_ACCE    0x53 // 3-Axis Accelerometer
 #define I2CADR_MAGNET  0x1E // 3-Axis Magnetometer
 #define I2CADR_BARO    0x77 // Barometor + Thermometer
-#define I2CPORT        6    // Target I2C Port
+#define I2CADR_TOUCH   0x78
+#define I2CPORT        1    // Target I2C Port
 #define HZ_0010K       10000
 #define HZ_0400K      400000
 #define HZ_3400K     3400000
@@ -33,27 +34,35 @@ int i2cTest(void)
      uint8_t adr;
      int i, rcvbyte;
      mraa_i2c_context i2c;
+     uint8_t config[3];
 
-
-     enablePullup(6);
-     enablePullup(8);
+     enablePullup(7);
+     enablePullup(19);
 
      i2c = mraa_i2c_init(I2CPORT);
      if (i2c == NULL) {
           fprintf(stderr, "Cannot open i2c port:%d\n", I2CPORT);
           exit(1);
      }
-     mraa_i2c_frequency(i2c, HZ_0010K); // No Effect as of now in mraa.
-     adr = I2CADR_GYRO;
+     mraa_i2c_frequency(i2c, HZ_0400K); // No Effect as of now in mraa.
+     adr = I2CADR_TOUCH;
+     //adr = I2CADR_GYRO;
      //adr = I2CADR_MAGNET;
      //adr = I2CADR_ACCE;
      //adr = I2CADR_BARO;
-     mraa_i2c_address(i2c, adr);
-     i = 0;
+     if (mraa_i2c_address(i2c, adr) != MRAA_SUCCESS) {
+          fprintf(stderr, "Invalid address:%02x\n", adr);
+          exit(1);
+     }
+     config[0] = 0x00;
+     config[1] = 0xF5;
+     config[2] = 0xFC;
+     mraa_i2c_write(i2c, config, 3);
+     i = 0x02;
      while (1) {
-         rcvbyte = mraa_i2c_read_byte_data(i2c, i&0x0F);  // WHO_AM_I in ACCE
-         printf("(%012d) adr=%02x, cmd=%02x, result=%02x\n", i, adr, i&0x0FF, rcvbyte);
-         i++;
+         rcvbyte = mraa_i2c_read_byte_data(i2c, i);
+         printf("%02x\n", rcvbyte);
+         usleep(10000);
      }
      mraa_i2c_stop(i2c);
      return 0;
@@ -65,6 +74,6 @@ static void enablePullup(int gpioport)
      if (gpio == NULL) {
           fprintf(stderr, "Cannot open GPIO port:%d\n", gpioport);
      }
-     mraa_gpio_mode(gpio, MRAA_GPIO_PULLUP);
+     mraa_gpio_mode(gpio, MRAA_GPIO_STRONG);
      mraa_gpio_close(gpio);
 }

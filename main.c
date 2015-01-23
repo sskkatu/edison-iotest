@@ -10,7 +10,7 @@ int main(int argc, const char *argv[])
      printf("Board Name: %s\n", board_name);
      mraa_set_priority(99); // HIGHEST PRIORITY
      //gpioTest();
-     //i2cTest();
+     i2cTest();
      //spiLCDTest();
      //spiWS1812BTest();
      i2cOLEDTest();
