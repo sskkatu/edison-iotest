@@ -69,7 +69,7 @@ int spiWS1812BTest(void)
         fprintf(stderr, "Cannot open SPI port:%d\n", SPI_PORT);
         exit(1);
     }
-    mraa_spi_frequency(spi, KHZ(2750));
+    mraa_spi_frequency(spi, KHZ(2200));
     mraa_spi_mode(spi, MRAA_SPI_MODE0);
     mraa_spi_bit_per_word(spi, 32);
     mraa_spi_lsbmode(spi, 0);
@@ -99,7 +99,6 @@ int spiWS1812BTest(void)
             }
         }
         mraa_spi_transfer_buf(spi, (uint8_t*)buf, NULL, sizeof(buf));
-        //usleep(100);
     }
 #endif
     for (i=0; ; i++) {
@@ -121,7 +120,7 @@ int spiWS1812BTest(void)
             }
         }
         mraa_spi_transfer_buf(spi, (uint8_t*)buf, NULL, sizeof(buf));
-       usleep(100000);
+        usleep(100000);
     }
     return 0;
 }

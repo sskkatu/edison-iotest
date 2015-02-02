@@ -81,8 +81,8 @@ uint8_t Accelerometer::getDur(void) {
     return readReg(ADXL345_DUR);
 }
 
-void Accelerometer::setDur_us(useconds_t durms) {
-    setDur(convUtoR((int)durms, DUR_RESOLUTION_US));
+void Accelerometer::setDur_us(useconds_t durus) {
+    setDur(convUtoR((int)durus, DUR_RESOLUTION_US));
 }
 
 useconds_t Accelerometer::getDur_us(void) {

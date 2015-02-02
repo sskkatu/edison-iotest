@@ -8,6 +8,7 @@ LIBSRCS += lcd_ILI9340.cpp
 
 # Sensor Device
 LIBSRCS += accelerometer.cpp
+LIBSRCS += accelerometer_application.cpp
 LIBSRCS += barometer.cpp
 LIBSRCS += compass.cpp
 LIBSRCS += gps.cpp

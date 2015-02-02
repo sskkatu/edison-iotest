@@ -2,6 +2,7 @@ PROGRAM = ioTest
 SRCS += main.c 
 SRCS += i2ctest.c gpiotest.c 
 SRCS += i2c_OLEDtest.c
+SRCS += i2c_OLED_aitendo_test.c
 SRCS += spi_LCDtest.c spi_WS2812Btest.c 
 SRCS += uart_GPStest.c
 SRCS += glcdfont.c getipaddr.c 
