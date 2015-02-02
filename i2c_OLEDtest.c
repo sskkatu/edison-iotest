@@ -50,6 +50,20 @@ static void init(void);
 static void sendCommand(uint8_t cmd);
 static void sendCommandByte(uint8_t cmd, uint8_t data);
 static void sendCommandByte2(uint8_t cmd, uint8_t data1, uint8_t data2);
+static void invertDisplay(uint8_t i);
+static void startscrollright(uint8_t start, uint8_t stop);
+static void startscrollleft(uint8_t start, uint8_t stop);
+static void startscrolldiagright(uint8_t start, uint8_t stop);
+static void startscrolldiagleft(uint8_t start, uint8_t stop);
+static void stopscroll(void);
+static void display(void);
+static void displayOff();
+static void displayOn();
+static void clearFrameBuffer(void);
+static void setOLEDPoint(int x, int y);
+static void resetOLEDPoint(int x, int y);
+static void setOLEDPixel(int x, int y, int isSet);
+static void printOLEDText(int x, int y, const char *fmt, ...);
 
 /* Global variables */
 static mraa_i2c_context i2c = NULL;
