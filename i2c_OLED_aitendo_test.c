@@ -23,9 +23,9 @@
  */
 
 /* I2C/GPIO PORT Settings */
-#define I2CPORT          1 // Target I2C port
+#define I2CPORT          6 // Target I2C port
 #define I2CADR        0x3c // OLED slave address
-#define GPIO_I2C1SDA     7 
+#define GPIO_I2C1SDA     7
 #define GPIO_I2C1SCL    19 
 #define GPIO_RESET      10 // Use the SPI-2-CLK as a GPIO-RESET signal
 
@@ -50,6 +50,20 @@ static void init(void);
 static void sendCommand(uint8_t cmd);
 static void sendCommandByte(uint8_t cmd, uint8_t data);
 static void sendCommandByte2(uint8_t cmd, uint8_t data1, uint8_t data2);
+static void invertDisplay(uint8_t i);
+static void startscrollright(uint8_t start, uint8_t stop);
+static void startscrollleft(uint8_t start, uint8_t stop);
+static void startscrolldiagright(uint8_t start, uint8_t stop);
+static void startscrolldiagleft(uint8_t start, uint8_t stop);
+static void stopscroll(void);
+static void display(void);
+static void displayOff();
+static void displayOn();
+static void clearFrameBuffer(void);
+static void setOLEDPoint(int x, int y);
+static void resetOLEDPoint(int x, int y);
+static void setOLEDPixel(int x, int y, int isSet);
+static void printOLEDText(int x, int y, const char *fmt, ...);
 
 /* Global variables */
 static mraa_i2c_context i2c = NULL;
@@ -96,7 +110,7 @@ int i2cOLED_aitendo_Test(void)
         const char *ROT = "|/-\\*";
         clearFrameBuffer();
         printOLEDText(1,  1, "Hello, Edison.");
-        printOLEDText(1, 16, "IP : %s", getIPv4AdrString("wlan0"));
+        printOLEDText(1, 16, "IP : %s", getIPv4AdrString("eth0"));
         timer = time(NULL);
         local = localtime(&timer);
         printOLEDText(3, 32, "Date : %04d/%02d/%02d", 
@@ -124,7 +138,6 @@ static void init()
     resetAndWaitStable();              // Device reset and Wait stable
 
     sendCommand(SSD_DISPLAY_OFF);
-    stopscroll();
     sendCommandByte(SSD1306_SETDISPLAYCLOCKDIV, 0x80);
     sendCommandByte(SSD1306_SETMULTIPLEX, MULTIPLEX); 
     sendCommandByte(SSD1306_SETDISPLAYOFFSET, 0x00);
@@ -139,10 +152,180 @@ static void init()
     sendCommand(SSD1306_DISPLAYALLON_RESUME);
     sendCommand(SSD1306_NORMAL_DISPLAY);
     sendCommand(SSD_DISPLAY_ON);
-    // clearFrameBuffer();
+    clearFrameBuffer();
     display();
     usleep(5000);
 }
+
+static void clearFrameBuffer(void) 
+{
+    memset(frameBuf, 0, sizeof(frameBuf));
+}
+
+static void printOLEDText(int x, int y, const char *fmt, ...)
+{
+    char textbuf[80];
+    char *text = textbuf;
+    va_list arg;
+    int ix, iy;
+    unsigned char c;
+    uint8_t *fontdata;
+    uint8_t bitmap;
+
+    va_start(arg, fmt);
+    vsnprintf(textbuf, sizeof(textbuf), fmt, arg);
+    va_end(arg);
+
+    while ((c = *text++) != '\0') {
+        fontdata = glcdfont+c*5;
+        for (ix = 0; ix < 6; ix++) {
+            if (ix < 5) {
+                bitmap = fontdata[ix];
+            } else {
+                bitmap = 0x00;
+            }
+            for (iy = 0; iy < 8; iy++) {
+                setOLEDPixel(x + ix, y+iy, bitmap & 0x01);
+                bitmap >>= 1;
+            }
+        }
+        x += 6;
+    }
+}
+
+static void setOLEDPoint(int x, int y) 
+{
+    setOLEDPixel(x, y, 1);
+}
+
+static void resetOLEDPoint(int x, int y) 
+{
+    setOLEDPixel(x, y, 0);
+}
+
+
+static void setOLEDPixel(int x, int y, int isSet) 
+{
+    uint8_t *base = frameBuf;
+    uint8_t bitmap;
+    if (x < 0 || LCDWIDTH <= x || y < 0 || LCDHEIGHT <= y) {
+        return;
+    }
+
+    base += (y/8)*LCDWIDTH + x;
+    bitmap = 0x01 << (y % 8);
+
+    if (isSet) {
+        *base |= bitmap;
+    } else {
+        *base &= ~bitmap;
+    }
+}
+
+static void displayOff()
+{
+    sendCommand(SSD_DISPLAY_OFF);
+}
+
+static void displayOn()
+{
+    sendCommand(SSD_DISPLAY_ON);
+}
+
+static void invertDisplay(uint8_t i) 
+{
+    if (i) {
+        sendCommand(SSD_INVERSE_DISPLAY);
+    } else {
+        sendCommand(SSD1306_NORMAL_DISPLAY);
+    }
+}
+
+static void startscrollright(uint8_t start, uint8_t stop)
+{
+    sendCommand(SSD1306_RIGHT_HORIZONTAL_SCROLL);
+    sendCommand(0X00);
+    sendCommand(start);
+    sendCommand(0X00);
+    sendCommand(stop);
+    sendCommand(0X01);
+    sendCommand(0XFF);
+    sendCommand(SSD_ACTIVATE_SCROLL);
+}
+
+static void startscrollleft(uint8_t start, uint8_t stop)
+{
+    sendCommand(SSD1306_LEFT_HORIZONTAL_SCROLL);
+    sendCommand(0X00);
+    sendCommand(start);
+    sendCommand(0X00);
+    sendCommand(stop);
+    sendCommand(0X01);
+    sendCommand(0XFF);
+    sendCommand(SSD_ACTIVATE_SCROLL);
+}
+
+static void startscrolldiagright(uint8_t start, uint8_t stop)
+{
+    sendCommand(SSD1306_SET_VERTICAL_SCROLL_AREA);    
+    sendCommand(0X00);
+    sendCommand(LCDHEIGHT);
+    sendCommand(SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL);
+    sendCommand(0X00);
+    sendCommand(start);
+    sendCommand(0X00);
+    sendCommand(stop);
+    sendCommand(0X01);
+    sendCommand(SSD_ACTIVATE_SCROLL);
+}
+
+static void startscrolldiagleft(uint8_t start, uint8_t stop)
+{
+    sendCommand(SSD1306_SET_VERTICAL_SCROLL_AREA);    
+    sendCommand(0X00);
+    sendCommand(LCDHEIGHT);
+    sendCommand(SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL);
+    sendCommand(0X00);
+    sendCommand(start);
+    sendCommand(0X00);
+    sendCommand(stop);
+    sendCommand(0X01);
+    sendCommand(SSD_ACTIVATE_SCROLL);
+}
+
+static void stopscroll(void)
+{
+    sendCommand(SSD_DEACTIVATE_SCROLL);
+}
+
+static void display(void) 
+{
+    int i, j;
+    uint8_t buf[BYTE_PER_LCDWIDTH+1];
+    uint8_t dummyBuf[3+1];
+    uint8_t *pbuf = frameBuf;
+
+    memset(dummyBuf, 0, sizeof(dummyBuf));
+    dummyBuf[0] = 0x40;
+
+    sendCommand(SSD1306_SETLOWCOLUMN  | 0x0); // low col = 0
+    sendCommand(SSD1306_SETHIGHCOLUMN | 0x0); // hi col = 0
+    sendCommand(SSD1306_SETSTARTLINE  | 0x0); // line #0    
+    
+    for (i=0; i < LCDHEIGHT/8; i++) {
+        sendCommandByte2(0xB0+i, 0, 0x10);
+        // W/A for left 3-vertial column could not displayed
+        mraa_i2c_write(i2c, dummyBuf, sizeof(dummyBuf));
+        for (j = 0; j < LCDWIDTH/BYTE_PER_LCDWIDTH; j++) {
+            buf[0] = 0x40;
+            memcpy(&buf[1], pbuf, BYTE_PER_LCDWIDTH);
+            mraa_i2c_write(i2c, buf, sizeof(buf));
+            pbuf += BYTE_PER_LCDWIDTH;
+        }
+    }
+}
+
+
 
 static void sendCommand(uint8_t cmd)
 {
