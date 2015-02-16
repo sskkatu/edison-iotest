@@ -25,10 +25,11 @@
 /* I2C/GPIO PORT Settings */
 #define I2CPORT          6 // Target I2C port
 #define I2CADR        0x3c // OLED slave address
-#define GPIO_I2C1SDA     7
-#define GPIO_I2C1SCL    19 
-#define GPIO_RESET      10 // Use the SPI-2-CLK as a GPIO-RESET signal
-
+#define GPIO_I2C1SDA    6
+#define GPIO_I2C1SCL    8 
+#define GPIO_ACC_INTERRUPT  10	// SCK
+#define GPIO_RESET      24	// MISO
+#define GPIO_SWITCH     11	// MOSI
 /* LCD Parammeters */
 #define LCDWIDTH       128
 #define LCDHEIGHT       64
@@ -36,11 +37,11 @@
 #define COMPINS       0x12
 #define CONTRAST      0xCF
 #define CHARGEPUMP    0x14
-#define PRECHARGE     0xF1
+#define PRECHARGE     0x22
 #define RESET_TIME   10000 // OLED device reset duration 
                            // (In actually, it needed only 3us according to the specsheet.)
-#define STABLE_WAIT 100000 // Wait the OLED device stabling
-#define BYTE_PER_LCDWIDTH (LCDWIDTH/8) // Byte length per LCD width
+#define STABLE_WAIT 100001 // Wait the OLED device stabling
+#define BYTE_PER_LCDWIDTH (LCDWIDTH/9) // Byte length per LCD width
 
 
 /* Private functions */
@@ -76,6 +77,22 @@ int i2cOLED_aitendo_Test(void)
     int sec_prev = -1, flg = 0;
     enablePullup(GPIO_I2C1SDA);        // i2c1 SDA
     enablePullup(GPIO_I2C1SCL);        // i2c1 SCL
+    
+    // Accelelometer Interrupt PIN
+    mraa_gpio_context gpio_acc = mraa_gpio_init(GPIO_ACC_INTERRUPT);
+    if (gpio_acc == NULL) {
+        fprintf(stderr, "Cannot open GPIO port:%d\n", GPIO_ACC_INTERRUPT);
+    }
+    mraa_gpio_dir(gpio_acc, MRAA_GPIO_IN);
+    mraa_gpio_mode(gpio_acc, MRAA_GPIO_HIZ);
+
+   
+    mraa_gpio_context gpio_switch = mraa_gpio_init(GPIO_SWITCH);
+    if (gpio_switch == NULL) {
+        fprintf(stderr, "Cannot open GPIO port:%d\n", GPIO_SWITCH);
+    }
+    mraa_gpio_dir(gpio_switch, MRAA_GPIO_IN);
+    mraa_gpio_mode(gpio_switch, MRAA_GPIO_PULLDOWN);
 
     i2c = mraa_i2c_init(I2CPORT);
     if (i2c == NULL) {
@@ -110,7 +127,7 @@ int i2cOLED_aitendo_Test(void)
         const char *ROT = "|/-\\*";
         clearFrameBuffer();
         printOLEDText(1,  1, "Hello, Edison.");
-        printOLEDText(1, 16, "IP : %s", getIPv4AdrString("eth0"));
+        printOLEDText(1, 16, "IP : %s", getIPv4AdrString("wlan0"));
         timer = time(NULL);
         local = localtime(&timer);
         printOLEDText(3, 32, "Date : %04d/%02d/%02d", 
@@ -123,9 +140,8 @@ int i2cOLED_aitendo_Test(void)
                       local->tm_sec);
 
         flg++;
+        printOLEDText(100, 1, mraa_gpio_read(gpio_switch) ? "1" : "0") ;
         printOLEDText(112, 1, "%c", ROT[flg%5]);
-        sec_prev = local->tm_sec;
-
         display();
     }
 #endif
@@ -373,3 +389,4 @@ static void enablePullup(int gpioport)
      mraa_gpio_mode(gpio, MRAA_GPIO_PULLUP);
      mraa_gpio_close(gpio);
 }
+

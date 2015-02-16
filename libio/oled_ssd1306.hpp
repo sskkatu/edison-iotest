@@ -35,9 +35,9 @@ using namespace putmode;
 class Oled {
 private:
     // Default I2C port/address
-    static const int     DEFAULT_I2C_BUS_NO     =    1; 
+    static const int     DEFAULT_I2C_BUS_NO     =    6; 
     static const uint8_t DEFAULT_I2C_ADDRESS    = 0x3c;
-    static const int     DEFAULT_GPIO_RESET_PIN =   10;
+    static const int     DEFAULT_GPIO_RESET_PIN =   24;
 
     // OLED Parameters
     static const int WIDTH             =     128; // Pixel width
@@ -47,8 +47,8 @@ private:
     static const int STABLE_WAIT_TIME  =  100000; // Device stabling wait after reset
     static const uint8_t MULTIPLEX     =    0x3f;
     static const uint8_t COMPINS       =    0x12;
-    static const uint8_t CONTRAST      =    0x9F;
-    static const uint8_t CHARGEPUMP    =    0x10;
+    static const uint8_t CONTRAST      =    0xCF;
+    static const uint8_t CHARGEPUMP    =    0x14;
     static const uint8_t PRECHARGE     =    0x22;
 
     I2c* i2c;

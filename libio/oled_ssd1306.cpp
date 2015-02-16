@@ -1,6 +1,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <math.h>
 #include "oled_ssd1306.hpp"
 #include "glcdfont.hpp"
 #include "oled_ssd1306_commands.hpp"
@@ -16,13 +17,12 @@ void Oled::resetDevice(void) {
 }
 
 void Oled::initializeDevice() {
-    stopDisplay();
+    sendCommand(SSD_DISPLAY_OFF);
     sendCommand(SSD1306_SETDISPLAYCLOCKDIV, 0x80);
     sendCommand(SSD1306_SETMULTIPLEX, MULTIPLEX);
     sendCommand(SSD1306_SETDISPLAYOFFSET, 0x00);
     sendCommand(SSD1306_SETSTARTLINE | 0);
     sendCommand(SSD1306_CHARGEPUMP, CHARGEPUMP);
-    sendCommand(SSD1306_MEMORYMODE, 0x00);
     sendCommand(SSD1306_SEGREMAP | 0x1);
     sendCommand(SSD1306_COMSCANDEC);
     sendCommand(SSD1306_SETCOMPINS, COMPINS);
@@ -31,21 +31,19 @@ void Oled::initializeDevice() {
     sendCommand(SSD1306_SETVCOMDETECT, 0x40);
     sendCommand(SSD1306_DISPLAYALLON_RESUME);
     sendCommand(SSD1306_NORMAL_DISPLAY);
-    sendCommand(0x21, 0, 127);
-    sendCommand(0x22, 0, 127);
-    sendCommand(SSD_DEACTIVATE_SCROLL);
+    sendCommand(SSD_DISPLAY_ON);
+    clearScreen();
     update();
-
-    startDisplay();
+    usleep(100000);
 }
 
 void Oled::update(void) {
     int i, j;
     uint8_t buf[BYTE_PER_LCDWIDTH+1] = {};
-    uint8_t dummyBuf[3+1] = {};
+    //    uint8_t dummyBuf[3+1] = {};
     uint8_t *pbuf = frameBuf;
 
-    dummyBuf[0] = 0x40;
+    //    dummyBuf[0] = 0x40;
     sendCommand(SSD1306_SETLOWCOLUMN  | 0x0); // low col = 0
     sendCommand(SSD1306_SETHIGHCOLUMN | 0x0); // hi col = 0
     sendCommand(SSD1306_SETSTARTLINE  | 0x0); // line #0
@@ -53,7 +51,7 @@ void Oled::update(void) {
     for (i=0; i < HEIGHT/8; i++) {
         sendCommand(0xB0+i, 0, 0x10);
         // W/A for left 3-vertial column could not displayed
-        i2c->write(dummyBuf, sizeof(dummyBuf));
+        //        i2c->write(dummyBuf, sizeof(dummyBuf));
         for (j = 0; j < WIDTH/BYTE_PER_LCDWIDTH; j++) {
             buf[0] = 0x40;
             memcpy(&buf[1], pbuf, BYTE_PER_LCDWIDTH);

@@ -122,7 +122,8 @@ private:
     int convRtoU(uint8_t rval, int perUnit, int perUnitPower = 1) {
         return ((int)(rval) * perUnit / perUnitPower);
     }
-
+    // Pullup I2C Poort
+    void pullUpPort(int portNo);
 public:
     // Constructor 
     // Note : Arguments 'interrupt pin number' aren't mandatory.
@@ -136,6 +137,7 @@ public:
         if (i2cAddress == -1) {
             i2cAddress = DEFAULT_I2C_ADDRESS;
         }
+        pullUpPort(i2cBusNo);
         i2c = new I2c(i2cBusNo);
         i2c->address(i2cAddress);
         i2c->frequency(MRAA_I2C_FAST);

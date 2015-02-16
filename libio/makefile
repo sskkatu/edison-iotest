@@ -13,6 +13,9 @@ LIBSRCS += barometer.cpp
 LIBSRCS += compass.cpp
 LIBSRCS += gps.cpp
 
+# Others
+LIBSRCS += getipaddr.cpp
+
 OBJDIR = obj
 OBJS = $(addprefix $(OBJDIR)/, $(LIBSRCS:%.cpp=%.o))
 DEPDIR = .dep
@@ -33,7 +36,7 @@ clean :
 	rm -rf $(OBJDIR) $(DEPDIR)
 
 $(TEST) : $(LIBS) test.o
-	$(CPP) $(OBJS) test.o -o $(TEST) -lmraa
+	$(CPP) $(OBJS) test.o -o $(TEST) -lmraa -lm
 
 $(LIBS) : $(OBJS)
 	$(CPP) -shared $^ -o $(LIBS)

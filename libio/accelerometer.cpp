@@ -25,6 +25,17 @@ mraa_result_t Accelerometer::interruptExit(int intno) {
     return MRAA_ERROR_NO_RESOURCES;
 }
 
+void Accelerometer::pullUpPort(int portNo) {
+    /*
+    const struct {
+        int i2cport;
+        int scl;
+        int sda;
+    } I2CPORT_TO_GPIO  = {
+    }
+    */
+}
+
 uint8_t Accelerometer::getDevId(void) {
     return readReg(ADXL345_DEVICE_ID);
 }
